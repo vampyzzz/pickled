@@ -108,13 +108,13 @@
         .tr-safe-immune { background-color: white; border: 2px solid #a855f7 !important; }
         .tr-low { background-color: pink; }
         .tr-btm { background-color: tomato; }
-        .tr-elim { background-color: red; font-weight: bold; }
+        .tr-elim { background-color: #E74C3C; color: white; font-weight: bold; }
         .tr-semi-finals { background-color: sienna; color: white; font-weight: bold; }
         .tr-guest { background-color: lightgrey; }
         .tr-block { background-color: #4b5563; color: white; }
         .tr-special, .tr-choc, .tr-rtrn, .tr-star, .tr-qosdadh, .tr-star-gift { background-color: #a855f7; color: white; font-weight: bold; }
-        .tr-winner { background-color: yellow; font-weight: bold;}
-        .tr-runner-up { background-color: #9DCECB; font-weight: bold;}
+        .tr-winner { background-color: gold; font-weight: bold;}
+        .tr-runner-up { background-color: silver; font-weight: bold;}
         .hide { display: none; }
         .tab-button.active {
             background-color: #d474a0;
@@ -201,57 +201,8 @@
             <div id="setup-screen">
                 <div class="bg-white/50 p-8 rounded-xl shadow-lg">
                     <h2 class="text-3xl font-semibold mb-6 text-center text-gray-700">Create Your Season</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
-                            <label for="cast-size" class="block mb-2 text-sm font-medium text-gray-600">Number of Queens</label>
-                            <input type="number" id="cast-size" class="w-full rounded-lg p-3 text-lg" value="0" min="5" max="20" readonly>
+                    <div id="predefined-casts-container">
                         </div>
-                        <div>
-                            <label for="format" class="block mb-2 text-sm font-medium text-gray-600">Season Format</label>
-                            <select id="format" class="w-full rounded-lg p-3 text-lg">
-                                <option value="regular">Regular Season</option>
-                                <option value="all-stars">All Stars</option>
-                                <option value="lipsync-assassin">All Stars (Lipsync Assassin)</option>
-                                <option value="all-winners">All Winners (max 8 queens)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mt-6">
-                        <label class="block mb-3 text-sm font-medium text-gray-600">Special Twists</label>
-                        <div class="flex flex-wrap gap-x-6 gap-y-3">
-                            <label class="flex items-center">
-                                <input type="checkbox" id="immunity" class="w-5 h-5 text-pink-500 bg-gray-100 border-gray-300 rounded focus:ring-pink-400">
-                                <span class="ml-2 text-md text-gray-700">Immunity Twist</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" id="chocolate-bar" class="w-5 h-5 text-pink-500 bg-gray-100 border-gray-300 rounded focus:ring-pink-400">
-                                <span class="ml-2 text-md text-gray-700">Golden Chocolate Bar</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" id="riggory" class="w-5 h-5 text-pink-500 bg-gray-100 border-gray-300 rounded focus:ring-pink-400" checked>
-                                <span class="ml-2 text-md text-gray-700">Producer Riggory</span>
-                            </label>
-                        </div>
-                    </div>
-                     <div class="mt-8">
-                        <h3 class="text-2xl font-semibold mb-4 text-gray-700">Your Cast (<span id="selected-queen-count">0</span>)</h3>
-                        <div id="current-cast-display" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 min-h-[60px] p-3 bg-gray-100 rounded-lg">
-                           </div>
-                        <div id="predefined-casts-container">
-                            </div>
-
-                        <div id="search-queens-tab" class="hidden">
-                            <input type="search" id="queen-search-input" class="w-full rounded-lg p-3 mb-4 text-lg" placeholder="Search for a queen...">
-                            <div id="search-results-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 max-h-96 overflow-y-auto p-3 bg-gray-100/70 rounded-lg">
-                                </div>
-                             <div class="text-center">
-                                <button id="add-random-queen-btn" class="btn-secondary font-bold py-2 px-5 rounded-full text-sm mt-4">Add Random Queen</button>
-                             </div>
-                        </div>
-                    </div>
-                    <div class="mt-8 pt-6 border-t border-gray-200 text-center">
-                        <button id="start-simulation-btn" class="btn-primary font-bold py-4 px-10 rounded-full text-xl">Start Simulation</button>
-                    </div>
                 </div>
             </div>
 
@@ -875,19 +826,14 @@
         const setupScreen = document.getElementById('setup-screen');
         const simulationScreen = document.getElementById('simulation-screen');
         const resultsScreen = document.getElementById('results-screen');
-        const startBtn = document.getElementById('start-simulation-btn');
-        const castSizeInput = document.getElementById('cast-size');
-        const formatSelect = document.getElementById('format');
         const episodeContent = document.getElementById('episode-content');
         const nextEpisodeBtn = document.getElementById('next-episode-btn');
         const trackRecordContainer = document.getElementById('track-record-container');
         const simulateAgainBtn = document.getElementById('simulate-again-btn');
         const newSeasonBtn = document.getElementById('new-season-btn');
         const winnerDisplay = document.getElementById('winner-display');
-        const selectedQueenCountEl = document.getElementById('selected-queen-count');
-        const addRandomBtn = document.getElementById('add-random-queen-btn');
         const predefinedCastsContainer = document.getElementById('predefined-casts-container');
-        const searchQueensTab = document.getElementById('search-queens-tab');
+        
 
         // --- CLASSES ---
         class Queen {
@@ -971,6 +917,9 @@
                             case 'LOW': totalScore += 2; break;
                             case 'BTM': totalScore += 1; break;
                             case 'ELIM': totalScore += 0; break;
+                             case 'WINNER': totalScore += 5; break;
+                            case 'RUNNER-UP': totalScore += 4; break;
+                            case 'SEMI-FINALS': totalScore += 2; break;
                         }
                     }
                 });
@@ -1364,6 +1313,8 @@
             simulationScreen.classList.add('hidden');
             resultsScreen.classList.remove('hidden');
 
+            state.challengeLog.push('Finale');
+
             // Top 4 Smackdown
             if(state.currentCast.length === 4) {
                 state.currentCast.sort((a,b) => b.wins - a.wins || b.ppe - a.ppe); // Seed based on performance
@@ -1382,7 +1333,7 @@
                 runnerUp.addToTrackRecord("RUNNER-UP");
                 semiFinalists.forEach(q => q.addToTrackRecord("SEMI-FINALS"));
 
-                state.eliminatedCast.push(...[runnerUp, ...semiFinalists]);
+                state.eliminatedCast.push(...[runnerUp, ...semiFinalists].sort((a,b) => b.ppe - a.ppe));
                 state.currentCast = [winner];
             } else { // Top 3 Finale
                 state.currentCast.sort((a,b) => b.performanceScore - a.performanceScore);
@@ -1406,7 +1357,7 @@
         }
 
         function renderTrackRecord() {
-            const finalCast = [...state.currentCast, ...state.eliminatedCast.reverse()];
+             const finalCast = [...state.currentCast, ...state.eliminatedCast.sort((a, b) => b.trackRecord.length - a.trackRecord.length || b.ppe - a.ppe)];
             finalCast.forEach(q => q.calculatePPE());
             let tableHTML = `<table class="track-record-table">
                                 <thead>
@@ -1465,7 +1416,6 @@
         function initializeApp() {
             loadPredefinedCasts();
             // Event Listeners for tabs and buttons are here
-            startBtn.addEventListener('click', startSimulation);
             newSeasonBtn.addEventListener('click', resetToSetup);
             nextEpisodeBtn.addEventListener('click', runNextEpisode);
             simulateAgainBtn.addEventListener('click', startSimulation); 
@@ -1636,21 +1586,7 @@
         
        window.predefCast = function(seasonKey) {
             originalCastData = ALL_QUEENS_DATA.filter(q => seasons[seasonKey].includes(q.name));
-            updateCurrentCastDisplay();
             startSimulation();
-        }
-
-        function updateCurrentCastDisplay() {
-            currentCastDisplay.innerHTML = '';
-            originalCastData.forEach(qData => {
-                const card = document.createElement('div');
-                card.className = 'bg-pink-100 rounded-lg p-2 text-center shadow-inner';
-                card.dataset.queenName = qData.name;
-                card.innerHTML = `<p class="text-xs font-medium text-pink-700 truncate">${qData.name}</p>`;
-                currentCastDisplay.appendChild(card);
-            });
-            castSizeInput.value = originalCastData.length;
-            selectedQueenCountEl.textContent = originalCastData.length;
         }
 
         function startSimulation() {
@@ -1658,10 +1594,7 @@
                 showMessage('Cast Too Small', 'Please select at least 5 queens to start.');
                 return;
             }
-            if (formatSelect.value === 'all-winners' && originalCastData.length > 8) {
-                showMessage('Invalid Format Choice', 'The All Winners format is only available for 8 or fewer queens.');
-                return;
-            }
+            // Logic to determine format based on seasonKey can be added here
             resetState();
             setupScreen.classList.add('hidden');
             resultsScreen.classList.add('hidden');
@@ -1675,9 +1608,6 @@
             simulationScreen.classList.add('hidden');
             resultsScreen.classList.add('hidden');
             originalCastData = [];
-            currentCastDisplay.innerHTML = '';
-            selectedQueenCountEl.textContent = 0;
-            castSizeInput.value = 0;
         }
         
         function showMessage(title, message) {
