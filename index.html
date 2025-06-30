@@ -1425,6 +1425,12 @@
             });
              document.getElementById('add-random-queen-btn').addEventListener('click', addRandomQueen);
             renderSearchResults(ALL_QUEENS_DATA);
+            if(localStorage.getItem('cast')) {
+                originalCastData = ALL_QUEENS_DATA.filter(q => JSON.parse(localStorage.getItem('cast')).includes(q.name));
+                localStorage.removeItem('cast');
+                updateCurrentCastDisplay();
+                startSimulation();
+            }
 
         }
 
@@ -1525,13 +1531,6 @@
              modal.classList.add('hidden');
              modal.classList.remove('flex');
         });
-
-         if(localStorage.getItem('cast')) {
-            originalCastData = ALL_QUEENS_DATA.filter(q => JSON.parse(localStorage.getItem('cast')).includes(q.name));
-            localStorage.removeItem('cast');
-            startSimulation();
-        }
-
 
         document.addEventListener('DOMContentLoaded', initializeApp);
     </script>
