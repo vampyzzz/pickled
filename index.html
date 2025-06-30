@@ -199,10 +199,80 @@
 
         <main id="main-content">
             <div id="setup-screen">
-                <div class="bg-white/50 p-8 rounded-xl shadow-lg">
-                    <h2 class="text-3xl font-semibold mb-6 text-center text-gray-700">Create Your Season</h2>
-                    <div id="predefined-casts-container">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="content-left">
+                        <p class="text-lg mb-4">This is your chance to simulate a drag race season with all your favorite contestants!</p>
+                        <div class="search-wrapper mb-4">
+                            <label for="search" class="block text-lg mb-2">Choose your contestants:</label>
+                            <input type="search" id="search" class="w-full rounded-lg p-3 text-lg" placeholder="Type a name..">
                         </div>
+                        <div class="mb-4">
+                            <button id="add-random-queen-btn" class="btn-secondary font-bold py-2 px-5 rounded-full text-sm">Add Random Queen</button>
+                        </div>
+                        <div id="search-results-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 max-h-96 overflow-y-auto p-3 bg-gray-100/70 rounded-lg">
+                            </div>
+                        <div class="mt-4">
+                            <p class="text-lg mb-2">Choose your premiere format: </p>
+                            <select id="premiere-format" class="w-full rounded-lg p-3 text-lg">
+                                <option>Normal premiere</option>
+                                <option value="par-premiere">Normal Premiere (No Elimination)</option>
+                                <option value="slayers-premiere">Normal Premiere (Slayers)</option>
+                                <option value="s9-premiere">Normal Premiere (Late Entry)</option>
+                                <option value="s6-premiere">Double Premiere</option>
+                                <option value="s12-premiere">Double Premiere (No Elimination)</option>
+                                <option value="s14-premiere">Double Premiere (Talent Show)</option>
+                                <option value="ph2-premiere">Double Premiere (Girl Groups)</option>
+                                <option value="porkchop">Porkchop Premiere</option>
+                                <option value="rateaqueen">Rate A Queen Premiere</option>
+                                <option value="uk3-premiere">UK3 Premiere</option>
+                            </select>
+                        </div>
+                         <div class="mt-4">
+                            <p class="text-lg mb-2">Twists: </p>
+                             <div class="flex flex-wrap gap-x-6 gap-y-3">
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="immunity" class="w-5 h-5 text-pink-500 bg-gray-100 border-gray-300 rounded focus:ring-pink-400">
+                                    <span class="ml-2 text-md text-gray-700">Immunity</span>
+                                </label>
+                                 <label class="flex items-center">
+                                    <input type="checkbox" id="beaver" class="w-5 h-5 text-pink-500 bg-gray-100 border-gray-300 rounded focus:ring-pink-400">
+                                    <span class="ml-2 text-md text-gray-700">Golden Beaver</span>
+                                </label>
+                                 <label class="flex items-center">
+                                    <input type="checkbox" id="famegames" class="w-5 h-5 text-pink-500 bg-gray-100 border-gray-300 rounded focus:ring-pink-400">
+                                    <span class="ml-2 text-md text-gray-700">Fame Games</span>
+                                </label>
+                                  <label class="flex items-center">
+                                    <input type="checkbox" id="riggory" class="w-5 h-5 text-pink-500 bg-gray-100 border-gray-300 rounded focus:ring-pink-400" checked>
+                                    <span class="ml-2 text-md text-gray-700">Producer Riggory</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <p class="text-lg mb-2">Choose your season format: </p>
+                            <select id="format" class="w-full rounded-lg p-3 text-lg">
+                                <option value="regular">Regular</option>
+                                <option value="all-stars">All Stars</option>
+                                <option value="lipsync-assassin">Lipsync Assassin</option>
+                                <option value="all-winners">All Winners</option>
+                            </select>
+                        </div>
+
+                        <div class="mt-4">
+                            <p class="text-lg mb-2">Choose your finale format: </p>
+                            <select id="finale" class="w-full rounded-lg p-3 text-lg">
+                                <option value="top4">Top 4</option>
+                                <option value="top3">Top 3</option>
+                            </select>
+                        </div>
+                        <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+                            <button id="start-simulation-btn" class="btn-primary font-bold py-4 px-10 rounded-full text-xl">Start Simulation</button>
+                        </div>
+                    </div>
+                    <div class="content-right">
+                         <div id="predefined-casts-container">
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -455,7 +525,7 @@
             { name: "Geneva Karr", stats: { acting: 6, comedy: 6, dance: 9, design: 5, improv: 6, runway: 8, lipsync: 8 } },
             { name: "Hershii LiqCour-Jeté", stats: { acting: 4, comedy: 10, dance: 7, design: 6, improv: 8, runway: 7, lipsync: 6 } },
             { name: "Megami", stats: { acting: 7, comedy: 6, dance: 9, design: 10, improv: 6, runway: 8, lipsync: 8 } },
-            { name: "Mhi'ya Iman Le'Paige", stats: { acting: 6, comedy: 7, dance: 11, design: 6, improv: 7, runway: 8, lipsync: 13 } },
+            { name: "Mhi'ya Iman LePaige", stats: { acting: 6, comedy: 7, dance: 11, design: 6, improv: 7, runway: 8, lipsync: 13 } },
             { name: "Mirage", stats: { acting: 5, comedy: 6, dance: 12, design: 7, improv: 6, runway: 6, lipsync: 10 } },
             { name: "Morphine Love Dion", stats: { acting: 6, comedy: 8, dance: 10, design: 8, improv: 6, runway: 10, lipsync: 12 } },
             { name: "Nymphia Wind", stats: { acting: 7, comedy: 8, dance: 9, design: 15, improv: 5, runway: 13, lipsync: 8 } },
@@ -788,7 +858,7 @@
                 seasonFormat: document.getElementById('format').value,
                 specialTwists: {
                     immunity: document.getElementById('immunity').checked,
-                    chocolateBar: document.getElementById('chocolate-bar').checked,
+                    chocolateBar: document.getElementById('chocolate-bar') ? document.getElementById('chocolate-bar').checked : false,
                     riggory: document.getElementById('riggory').checked,
                     chocolateBarUsed: false,
                 },
@@ -826,6 +896,7 @@
         const setupScreen = document.getElementById('setup-screen');
         const simulationScreen = document.getElementById('simulation-screen');
         const resultsScreen = document.getElementById('results-screen');
+        const startBtn = document.getElementById('start-simulation-btn');
         const episodeContent = document.getElementById('episode-content');
         const nextEpisodeBtn = document.getElementById('next-episode-btn');
         const trackRecordContainer = document.getElementById('track-record-container');
@@ -833,8 +904,10 @@
         const newSeasonBtn = document.getElementById('new-season-btn');
         const winnerDisplay = document.getElementById('winner-display');
         const predefinedCastsContainer = document.getElementById('predefined-casts-container');
-        
+        const searchResultsContainer = document.getElementById('search-results-container');
+        const searchInput = document.getElementById('search');
 
+        
         // --- CLASSES ---
         class Queen {
             constructor(data) {
@@ -1419,6 +1492,12 @@
             newSeasonBtn.addEventListener('click', resetToSetup);
             nextEpisodeBtn.addEventListener('click', runNextEpisode);
             simulateAgainBtn.addEventListener('click', startSimulation); 
+            startBtn.addEventListener('click', startSimulation);
+             searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                const filteredQueens = ALL_QUEENS_DATA.filter(q => q.name.toLowerCase().includes(query));
+                renderSearchResults(filteredQueens);
+            });
         }
 
         function loadPredefinedCasts() {
