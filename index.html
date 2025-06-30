@@ -66,56 +66,55 @@
             color: #333;
         }
         .track-record-table {
-            background-color: rgba(255, 255, 255, 0.7);
-            border-collapse: separate;
-            border-spacing: 0;
-            overflow: hidden;
+            border-collapse: collapse;
             width: 100%;
+            font-size: 14px;
         }
+
+        .track-record-table th, .track-record-table td {
+            border: 2px solid #ddd;
+            text-align: center;
+            padding: 8px;
+            
+        }
+
         .track-record-table th {
-            padding: 12px;
-            text-align: center;
-            background-color: rgba(238, 156, 167, 0.2);
-            color: #a64ca6;
-            border: 1px solid #e2e8f0;
+            background-color: #f2f2f2;
+            font-weight: bold;
         }
-        .track-record-table td {
-            border: 1px solid #e2e8f0;
-            text-align: center;
-            width: 60px; /* Or your desired size */
-            height: 60px; /* Same as width */
-            padding: 0;
-            vertical-align: middle;
-            font-size: 14px; /* Adjust as needed */
+
+        .tr-rank {
+            background-color: #f5ebf5;
+            font-weight: bold;
         }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 10px;
+        .tr-queen-name {
+            font-weight: bold;
         }
-        ::-webkit-scrollbar-track {
-            background: #ffdde1;
+        .tr-queen-photo {
+            width: 60px;
+            height: 60px;
+            background-size: cover;
+            background-position: center;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #d474a0;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #a64ca6;
+        .tr-ppe {
+            font-weight: bold;
+            background-color: lightgray;
         }
         /* Color classes for track records */
-        .tr-win { background-color: #60a5fa; color: white; font-weight: bold; }
-        .tr-top2 { background-color: #34d399; color: white; font-weight: bold; }
-        .tr-high { background-color: #93c5fd; color: #1e3a8a; }
-        .tr-safe { background-color: #f8fafc; color: #475569; }
-        .tr-safe-immune { background-color: #f8fafc; color: #475569; border: 2px solid #a855f7 !important; }
-        .tr-low { background-color: #fcd34d; color: #b45309; }
-        .tr-btm { background-color: #fb7185; color: #9f1239; }
-        .tr-elim, .tr-semi-finals { background-color: #ef4444; color: white; font-weight: bold; }
-        .tr-guest { background-color: #9ca3af; color: white; }
+        .tr-win { background-color: royalblue; color: white; font-weight: bold; }
+        .tr-top2 { background-color: lightgreen; }
+        .tr-high { background-color: lightblue; }
+        .tr-safe { background-color: white; }
+        .tr-safe-immune { background-color: white; border: 2px solid #a855f7 !important; }
+        .tr-low { background-color: pink; }
+        .tr-btm { background-color: tomato; }
+        .tr-elim { background-color: red; font-weight: bold; }
+        .tr-semi-finals { background-color: sienna; color: white; font-weight: bold; }
+        .tr-guest { background-color: lightgrey; }
         .tr-block { background-color: #4b5563; color: white; }
         .tr-special, .tr-choc, .tr-rtrn, .tr-star, .tr-qosdadh, .tr-star-gift { background-color: #a855f7; color: white; font-weight: bold; }
-        .tr-winner { background-color: #facc15; color: #78350f; font-weight: bold;}
-        .tr-runner-up { background-color: #d1d5db; color: #4b5563; font-weight: bold;}
+        .tr-winner { background-color: yellow; font-weight: bold;}
+        .tr-runner-up { background-color: #9DCECB; font-weight: bold;}
         .hide { display: none; }
         .tab-button.active {
             background-color: #d474a0;
@@ -765,7 +764,7 @@
             { name: "Versex", stats: { acting: 6, comedy: 5, dance: 5, design: 5, improv: 5, runway: 8, lipsync: 5 }},
             { name: "Yudipota", stats: { acting: 9, comedy: 7, dance: 6, design: 10, improv: 6, runway: 8, lipsync: 5 }},
             { name: "Zymba Ding", stats: { acting: 10, comedy: 6, dance: 13, design: 10, improv: 7, runway: 10, lipsync: 13 }}
-        ].sort((a, b) => a.name.localeCompare(b.name)).map(q => ({...q, image: `https://placehold.co/105x105/${Math.floor(Math.random()*16777215).toString(16)}/ffffff?text=${q.name.split(' ')[0]}`}));
+        ].sort((a, b) => a.name.localeCompare(b.name)).map(q => ({...q, image: `https://i.ibb.co/1fRkM0g/Image-not-found.png`}));
 
         const ALL_CHALLENGES = [
             'Ball Challenge', 'Commercial Challenge', 'Design Challenge', 'Girl Group Challenge', 'Improv Challenge',
@@ -909,6 +908,26 @@
 
             addToTrackRecord(placement) {
                 this.trackRecord[state.episodeCount - 1] = placement;
+            }
+             calculatePPE() {
+                let totalScore = 0;
+                let episodes = 0;
+                this.trackRecord.forEach(placement => {
+                    if(placement) {
+                        episodes++;
+                        switch(placement) {
+                            case 'WIN': totalScore += 5; break;
+                            case 'TOP2': totalScore += 4; break;
+                            case 'HIGH': totalScore += 4; break;
+                            case 'SAFE': totalScore += 3; break;
+                            case 'SAFE (Immune)': totalScore += 3; break;
+                            case 'LOW': totalScore += 2; break;
+                            case 'BTM': totalScore += 1; break;
+                            case 'ELIM': totalScore += 0; break;
+                        }
+                    }
+                });
+                this.ppe = episodes > 0 ? (totalScore / episodes).toFixed(2) : 0;
             }
         }
         
@@ -1339,45 +1358,56 @@
             renderTrackRecord();
         }
 
-        function renderTrackRecord(preSortedCast = null, isAllWinners = false) {
-            let finalCast = preSortedCast;
-            if (!finalCast) {
-                finalCast = isAllWinners ? [...state.currentCast] : [...state.currentCast, ...state.eliminatedCast.reverse()];
-                if (isAllWinners) {
-                    finalCast.sort((a,b) => b.stars - a.stars);
-                }
+        function renderTrackRecord() {
+            const finalCast = [...state.currentCast, ...state.eliminatedCast.reverse()];
+            finalCast.forEach(q => q.calculatePPE());
+            let tableHTML = `<table class="track-record-table">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2">Rank</th>
+                                        <th rowspan="2">Contestant</th>
+                                        <th rowspan="2">Photo</th>`;
+            for(let i=1; i<= state.episodeCount; i++) {
+                tableHTML += `<th>Ep. ${i}</th>`;
             }
-            
-            let tableHTML = `<table class="track-record-table rounded-lg"><thead><tr><th class="rounded-tl-lg">Queen</th>`;
-            if (isAllWinners) {
-                tableHTML += `<th>Stars</th>`;
-            }
-            for(let i=1; i<= state.episodeCount; i++) { 
-                const challengeName = state.challengeLog[i - 1] || '';
-                const formattedChallenge = challengeName.replace(/ Challenge/g, '');
-                tableHTML += `<th class="${i === state.episodeCount ? 'rounded-tr-lg' : ''}"><div class="font-semibold">Ep ${i}</div><div class="text-xs font-normal normal-case">${formattedChallenge}</div></th>`;
+            tableHTML += `<th rowspan="2">PPE</th></tr><tr>`;
+            for(let i=0; i< state.episodeCount; i++) {
+                const challengeName = state.challengeLog[i] || '';
+                tableHTML += `<th><small>${challengeName.replace(' Challenge', '')}</small></th>`;
             }
             tableHTML += `</tr></thead><tbody>`;
 
             finalCast.forEach((queen, index) => {
-                tableHTML += `<tr><td class="font-semibold text-left p-3 ${index === finalCast.length - 1 ? 'rounded-bl-lg' : ''}">${queen.name}</td>`;
-                 if (isAllWinners) {
-                    tableHTML += `<td>${queen.stars} ⭐</td>`;
+                let rank = index + 1;
+                let rankText;
+                 switch(rank) {
+                    case 1: rankText = "1st <br><small>(Winner)</small>"; break;
+                    case 2: rankText = "2nd <br><small>(Runner-Up)</small>"; break;
+                    case 3: rankText = "3rd"; break;
+                    default: rankText = `${rank}th`;
                 }
+
+                tableHTML += `<tr>
+                                <td class="tr-rank">${rankText}</td>
+                                <td class="tr-queen-name">${queen.name}</td>
+                                <td class="tr-queen-photo" style="background-image: url('${queen.image}')"></td>`;
                 queen.trackRecord.forEach(placement => {
-                    let placementText = placement || 'SAFE';
+                    let placementText = placement || '';
                     let placementClass = `tr-${placementText.toLowerCase().split(' ')[0].replace(/[^a-z0-9-]/g, '')}`;
                     if(placement === "SAFE (Immune)") {
                         placementClass = "tr-safe-immune";
                         placementText = "SAFE";
-                    }
-                     if(placement === "STAR (GIFT)") {
+                    } else if (placement === "STAR (GIFT)") {
                         placementClass = "tr-special";
                         placementText = "STAR";
                     }
-                    tableHTML += `<td class="${placementClass}"><div class="flex items-center justify-center h-full">${placementText}</div></td>`;
+                    tableHTML += `<td class="${placementClass}">${placementText}</td>`;
                 });
-                tableHTML += `</tr>`;
+                // Fill in empty cells for eliminated queens
+                for (let i = queen.trackRecord.length; i < state.episodeCount; i++) {
+                    tableHTML += `<td style="background-color: gray;"></td>`;
+                }
+                tableHTML += `<td class="tr-ppe">${queen.ppe}</td></tr>`;
             });
 
             tableHTML += `</tbody></table>`;
