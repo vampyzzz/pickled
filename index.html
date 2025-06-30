@@ -108,7 +108,6 @@
         </header>
 
         <main id="main-content">
-            <!-- Initial Setup Screen -->
             <div id="setup-screen">
                 <div class="bg-gray-800 p-6 rounded-lg shadow-2xl">
                     <h2 class="text-2xl font-semibold mb-4 text-center">Create Your Season</h2>
@@ -147,8 +146,7 @@
                      <div class="mt-6">
                         <h3 class="text-xl font-semibold mb-3">Your Cast (<span id="selected-queen-count">0</span>)</h3>
                         <div id="current-cast-display" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 min-h-[50px] p-2 bg-gray-900 rounded-lg">
-                           <!-- Selected queens will be displayed here -->
-                        </div>
+                           </div>
                         <div class="flex justify-center space-x-2 my-4">
                             <button id="predefined-tab-btn" class="tab-button btn-secondary text-white font-bold py-2 px-4 rounded-full active">Predefined Casts</button>
                             <button id="search-tab-btn" class="tab-button btn-secondary text-white font-bold py-2 px-4 rounded-full">Search Queens</button>
@@ -156,15 +154,13 @@
 
                         <div id="predefined-casts-tab">
                              <div id="predefined-casts-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-80 overflow-y-auto p-2 bg-gray-900/50 rounded-lg">
-                                <!-- Predefined cast buttons will be populated here -->
-                             </div>
+                                </div>
                         </div>
 
                         <div id="search-queens-tab" class="hidden">
                             <input type="search" id="queen-search-input" class="w-full bg-gray-700 border-gray-600 text-white rounded-lg p-2.5 mb-2" placeholder="Search for a queen...">
                             <div id="search-results-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 max-h-80 overflow-y-auto p-2 bg-gray-900/50 rounded-lg">
-                                <!-- Search results will appear here -->
-                            </div>
+                                </div>
                              <button id="add-random-queen-btn" class="btn-secondary text-white font-bold py-2 px-4 rounded-full text-sm mt-4">Add Random Queen</button>
                         </div>
                     </div>
@@ -174,27 +170,22 @@
                 </div>
             </div>
 
-            <!-- Simulation Screen -->
             <div id="simulation-screen" class="hidden">
                  <div id="episode-content" class="bg-gray-800 p-6 rounded-lg shadow-2xl">
-                     <!-- Content will be dynamically added here -->
-                 </div>
+                     </div>
                  <div class="mt-6 text-center">
                      <button id="next-episode-btn" class="btn-primary text-white font-bold py-3 px-8 rounded-full text-lg">Proceed</button>
                  </div>
             </div>
             
-            <!-- Results Screen -->
             <div id="results-screen" class="hidden">
                 <div class="bg-gray-800 p-6 rounded-lg shadow-2xl">
                     <h2 class="text-3xl font-bold text-center mb-4 header">Season Results</h2>
                     <div id="winner-display" class="text-center mb-6"></div>
                     <div id="track-record-container" class="overflow-x-auto">
-                        <!-- Track record table will be rendered here -->
-                    </div>
+                        </div>
                     <div id="stats-container" class="mt-6">
-                       <!-- Extra stats will be here -->
-                    </div>
+                       </div>
                     <div class="mt-8 text-center">
                         <button id="simulate-again-btn" class="btn-primary text-white font-bold py-2 px-6 rounded-full mr-4">Simulate Again</button>
                         <button id="new-season-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-full">New Season</button>
@@ -204,7 +195,6 @@
         </main>
     </div>
 
-    <!-- Modal for Messages -->
     <div id="message-modal" class="fixed inset-0 z-50 hidden items-center justify-center modal">
         <div class="modal-content rounded-lg shadow-xl p-6 w-11/12 md:w-1/2 lg:w-1/3">
             <h3 id="modal-title" class="text-xl font-bold mb-4"></h3>
@@ -926,8 +916,8 @@
             results.miniChallengeWinner = state.currentCast[Math.floor(Math.random() * state.currentCast.length)];
             results.miniChallengeWinner.favoritism += 0.5;
 
-            let availableChallenges = ALL_CHALLENGES.filter(c => !state.usedChallenges.includes(c) || state.usedChallenges.filter(used => used === c).length < 2);
-            if (availableChallenges.length === 0) { // Reset if all challenges used twice
+            let availableChallenges = ALL_CHALLENGES.filter(c => !state.usedChallenges.includes(c));
+            if (availableChallenges.length === 0) { // Reset if all challenges used
                 state.usedChallenges = [];
                 availableChallenges = [...ALL_CHALLENGES];
             }
@@ -938,30 +928,38 @@
             state.currentCast.forEach(queen => queen.performanceScore = queen.getPerformance(results.currentChallenge));
             
             state.currentCast.sort((a, b) => b.performanceScore - a.performanceScore);
-            results.tops = state.currentCast.slice(0, 3);
             
-            const nonTopQueens = state.currentCast.slice(3);
-            nonTopQueens.forEach(q => {
-                 if (q.isImmune) {
-                    q.wasImmuneAndSaved = true;
-                }
-            });
+            // Separate immune queens
+            const immuneQueens = state.currentCast.filter(q => q.isImmune);
+            const nonImmuneQueens = state.currentCast.filter(q => !q.isImmune);
 
-            const eligibleForBottom = nonTopQueens.filter(q => !q.isImmune);
-            eligibleForBottom.sort((a,b) => a.performanceScore - b.performanceScore);
+            // Determine tops from non-immune queens
+            const tops = nonImmuneQueens.slice(0, 3);
+            const winner = tops[0];
+            const highs = tops.slice(1);
             
-            if (eligibleForBottom.length < 2) {
+            // Determine bottoms from the rest of the non-immune queens
+            const remainingQueens = nonImmuneQueens.slice(3);
+            const bottoms = remainingQueens.slice(-3);
+            const lipSyncers = bottoms.slice(0, 2);
+            const lowQueen = bottoms.length > 2 ? bottoms[2] : null;
+            
+            const safes = remainingQueens.slice(0, -3);
+            
+            results.tops = tops;
+            results.winner = winner;
+            results.highs = highs;
+            results.low = lowQueen;
+            results.bottoms = bottoms;
+            results.lipSyncers = lipSyncers;
+            
+            if (lipSyncers.length < 2) {
                 results.lipSyncWinner = null;
                 results.eliminatedQueen = null;
                 results.savedByChocolate = false;
-                results.bottoms = nonTopQueens; 
-                results.lipSyncers = [];
             } else {
-                results.lipSyncers = eligibleForBottom.slice(0, 2);
-                results.bottoms = nonTopQueens; 
-
-                results.lipSyncWinner = results.lipSyncers[0].getLipsyncPerformance() > results.lipSyncers[1].getLipsyncPerformance() ? results.lipSyncers[0] : results.lipSyncers[1];
-                results.eliminatedQueen = results.lipSyncers.find(q => q !== results.lipSyncWinner);
+                results.lipSyncWinner = lipSyncers[0].getLipsyncPerformance() > lipSyncers[1].getLipsyncPerformance() ? lipSyncers[0] : lipSyncers[1];
+                results.eliminatedQueen = lipSyncers.find(q => q !== results.lipSyncWinner);
                 
                 results.savedByChocolate = false;
                 if (state.specialTwists.chocolateBar && !state.specialTwists.chocolateBarUsed && results.eliminatedQueen.hasGoldenChocolateBar) {
@@ -973,10 +971,10 @@
                 }
             }
 
-            updateTrackRecords(results.tops, nonTopQueens, results.lipSyncers, results.eliminatedQueen, results.savedByChocolate);
-            if (state.specialTwists.immunity) {
-                results.tops[0].isImmune = true;
-                results.tops[0].newlyImmune = true; 
+            updateRegularTrackRecords(winner, highs, safes, lowQueen, lipSyncers, results.eliminatedQueen, results.savedByChocolate, immuneQueens);
+            if (state.specialTwists.immunity && winner) {
+                winner.isImmune = true;
+                winner.newlyImmune = true; 
             }
             
             displayEpisodeResults(results);
@@ -1151,6 +1149,26 @@
             });
         }
 
+        function updateRegularTrackRecords(winner, highs, safes, low, bottoms, eliminated, savedByChocolate, immuneQueens) {
+            if (winner) {
+                winner.addToTrackRecord("WIN");
+                winner.wins++;
+            }
+            highs.forEach(q => q.addToTrackRecord("HIGH"));
+            safes.forEach(q => q.addToTrackRecord("SAFE"));
+            if (low) low.addToTrackRecord("LOW");
+            
+            bottoms.forEach(q => {
+                if (eliminated && q.name === eliminated.name && !savedByChocolate) {
+                    q.addToTrackRecord("ELIM");
+                } else {
+                    q.addToTrackRecord(savedByChocolate && eliminated && q.name === eliminated.name ? "CHOC" : "BTM");
+                    q.bottoms++;
+                }
+            });
+            immuneQueens.forEach(q => q.addToTrackRecord("SAFE (Immune)"));
+        }
+
         function updateTrackRecords(tops, bottoms, lipSyncers, eliminated, savedByChocolate, isAllStars = false, lsLoser = null) {
             if (isAllStars) {
                 tops.forEach(q => q.addToTrackRecord(q.name === lsLoser.name ? "TOP2" : "WIN"));
@@ -1209,11 +1227,10 @@
                 }
             }
             else {
-                const lowQueen = results.bottoms.find(q => results.lipSyncers && !results.lipSyncers.some(l => l.name === q.name) && !q.wasImmuneAndSaved);
-                content += `<p><strong class="text-blue-400">Winner:</strong> ${results.tops[0].name}</p>`;
-                content += `<p><strong class="text-blue-300">High:</strong> ${results.tops.slice(1).map(q => q.name).join(', ')}</p>`;
-                if (lowQueen) {
-                    content += `<p><strong class="text-yellow-400">Low:</strong> ${lowQueen.name}</p>`;
+                if (results.winner) content += `<p><strong class="text-blue-400">Winner:</strong> ${results.winner.name}</p>`;
+                if (results.highs && results.highs.length > 0) content += `<p><strong class="text-blue-300">High:</strong> ${results.highs.map(q => q.name).join(', ')}</p>`;
+                if (results.low) {
+                    content += `<p><strong class="text-yellow-400">Low:</strong> ${results.low.name}</p>`;
                 }
                 if (results.lipSyncers && results.lipSyncers.length > 0) {
                     content += `<p><strong class="text-red-400">Bottom 2:</strong> ${results.lipSyncers.map(q => q.name).join(' & ')}</p>`;
@@ -1336,6 +1353,7 @@
         
         // --- EVENT HANDLERS & INITIALIZATION ---
         function initializeApp() {
+            populatePredefinedCasts();
             // Event Listeners for tabs and buttons are here
             predefinedTabBtn.addEventListener('click', () => {
                 predefinedCastsTab.classList.remove('hidden');
@@ -1349,6 +1367,7 @@
                 searchQueensTab.classList.remove('hidden');
                 predefinedTabBtn.classList.remove('active');
                 searchTabBtn.classList.add('active');
+                renderSearchResults(ALL_QUEENS_DATA);
             });
 
             startBtn.addEventListener('click', startSimulation);
@@ -1358,7 +1377,83 @@
             addRandomBtn.addEventListener('click', addRandomQueen);
 
             queenSearchInput.addEventListener('input', (e) => {
-                // Search logic here
+                const query = e.target.value.toLowerCase();
+                const filteredQueens = ALL_QUEENS_DATA.filter(q => q.name.toLowerCase().includes(query));
+                renderSearchResults(filteredQueens);
+            });
+        }
+
+        function populatePredefinedCasts() {
+            const seasons = {
+                "US S1": ["Akashia", "BeBe Zahara Benet", "Jade Sotomayor", "Nina Flowers", "Ongina", "Rebecca Glasscock", "Shannel", "Tammie Brown", "Victoria 'Porkchop' Parker"],
+                "US S2": ["Jessica Wild", "Jujubee", "Morgan McMichaels", "Mystique Summers", "Nicole Paige Brooks", "Pandora Boxx", "Sahara Davenport", "Shangela", "Kylie Sonique Love", "Tatianna", "King Tyra"],
+                "US S3": ["Alexis Mateo", "Carmen Carrera", "Delta Work", "India Ferrah", "Manila Luzon", "Mariah Paris Balenciaga", "Mimi Imfurst", "Phoenix", "Raja", "Stacy Layne Matthews", "Venus D-Lite", "Yara Sofia"],
+                "US S4": ["Alisa Summers", "Chad Michaels", "Dida Ritz", "Jiggly Caliente", "Kenya Olivera", "Lashauwn Beyond", "Latrice Royale", "Madame LaQueer", "Milan", "Jaremi Carey", "The Princess", "Willam"],
+                "US S5": ["Alaska", "Alyssa Edwards", "Coco Montrese", "Detox", "Honey Mahogany", "Ivy Winters", "Jade Jolie", "Jinkx Monsoon", "Lineysha Sparx", "Monica Beverly Hillz", "Penny Tration", "Roxxxy Andrews", "Serena ChaCha", "Vivienne Pinay"],
+                "US S6": ["Adore Delano", "April Carrión", "BenDeLaCreme", "Bianca Del Rio", "Courtney Act", "Darienne Lake", "Gia Gunn", "Joslyn Fox", "Kelly Mantle", "Laganja Estranja", "Magnolia Crawford", "Milk", "Trinity K. Bonet", "Vivacious"],
+                "US S7": ["Ginger Minj", "Jaidynn Diore Fierce", "Jasmine Masters", "Kandy Ho", "Katya", "Kennedy Davenport", "Max", "Miss Fame", "Mrs. Kasha Davis", "Pearl", "Frisbee Jenkins", "Tempest DuJour", "Trixie Mattel", "Violet Chachki"],
+                "US S8": ["Acid Betty", "Bob The Drag Queen", "Chi Chi DeVayne", "Cynthia Lee Fontaine", "Dax ExclamationPoint", "Derrick Barry", "Kim Chi", "Laila McQueen", "Naomi Smalls", "Naysha Lopez", "Robbie Turner", "Thorgy Thor"],
+                "US S9": ["Aja", "Alexis Michelle", "Eureka!", "Farrah Moan", "Jaymes Mansfield", "Kimora Blac", "Nina Bo'nina Brown", "Peppermint", "Sasha Velour", "Shea Couleé", "Trinity The Tuck", "Valentina"],
+                "US S10": ["Aquaria", "Asia O'Hara", "Blair St. Clair", "Dusty Ray Bottoms", "Kalorie K. Williams", "Kameron Michaels", "Mayhem Miller", "Miz Cracker", "Monét X Change", "Mo Heart", "Vanessa 'Vanjie' Mateo", "The Vixen", "Yuhua Hamasaki"],
+                "US S11": ["A'keria C. Davenport", "Ariel Versace", "Brooke Lynn Hytes", "Honey Davenport", "Kahanna Montrese", "Mercedes Iman Diamond", "Nina West", "Plastique Tiara", "Ra'Jah O'Hara", "Scarlet Envy", "Shuga Cain", "Silky Nutmeg Ganache", "Yvie Oddly"],
+                "US S12": ["Aiden Zhane", "Brita", "Crystal Methyd", "Dahlia Sin", "Gigi Goode", "Heidi N Closet", "Jackie Cox", "Jaida Essence Hall", "Jan", "Nicky Doll", "Rock M. Sakura", "Widow Von'Du"],
+                "US S13": ["Denali", "Gottmik", "Joey Jay", "Kahmora Hall", "Kandy Muse", "LaLa Ri", "Olivia Lux", "Rosé", "Symone", "Tamisha Iman", "Tina Burner", "Utica Queen"],
+                "US S14": ["Alyssa Hunter", "Angeria Paris VanMicheals", "Bosco", "Daya Betty", "DeJa Skye", "Jasmine Kennedie", "Jorgeous", "June Jambalaya", "Kerri Colby", "Kornbread Jeté", "Lady Camden", "Maddy Morphosis", "Orion Story", "Willow Pill"],
+                "US S15": ["Amethyst", "Anetra", "Aura Mayari", "Irene Dubois", "Jax", "Loosey LaDuca", "Luxx Noir London", "Malaysia Babydoll Foxx", "Marcia Marcia Marcia", "Mistress Isabelle Brooks", "Robin Fierce", "Salina EsTitties", "Sasha Colby", "Spice", "Sugar"],
+                "US S16": ["Amanda Tori Meating", "Dawn", "Geneva Karr", "Hershii LiqCour-Jeté", "Megami", "Mhi'ya Iman Le'Paige", "Mirage", "Morphine Love Dion", "Nymphia Wind", "Plane Jane", "Plasma", "Q", "Sapphira Cristál", "Xunami Muse"],
+                "UK S1": ["Baga Chipz", "Blu Hydrangea", "Cheryl Hole", "Crystal (UK)", "Divina De Campo", "Gothy Kendoll", "Scaredy Kat", "Sum Ting Wong", "The Vivienne", "Vinegar Strokes"],
+                "UK S2": ["A'Whora", "Asttina Mandella", "Bimini", "Cherry Valentine", "Ellie Diamond", "Ginny Lemon", "Joe Black", "Lawrence Chaney", "Sister Sister", "Tayce", "Tia Kofi", "Veronica Green"],
+                "UK S3": ["Anubis", "Charity Kase", "Choriza May", "Elektra Fence", "Ella Vaday", "Kitty Scott-Claus", "Krystal Versace", "River Medway", "Scarlett Harlett", "Vanity Milan", "Victoria Scone"],
+                "UK S4": ["Baby", "Black Peppa", "Cheddar Gorgeous", "Copper Topp", "Dakota Schiffer", "Danny Beard", "Jonbers Blonde", "Just May", "Le Fil", "Pixie Polite", "Sminty Drop", "Starlet"],
+                "UK S5": ["Alexis Saint-Pete", "Banksie", "Cara Melle", "DeDeLicious", "Ginger Johnson", "Kate Butch", "Michael Marouli", "Miss Naomi Carter", "Tomara Thomas", "Vicki Vivacious"],
+                "CAN S1": ["Anastarzia Anaquway", "BOA", "Ilona Verley", "Jimbo", "Juice Boxx", "Kiara", "Kyne", "Lemon", "Priyanka", "Rita Baga", "Scarlett BoBo", "Tynomi Banks"],
+                "CAN S2": ["Adriana", "Beth", "Eve 6000", "Gia Metric", "Icesis Couture", "Kendall Gender", "Kimora Amour", "Océane Aqua-Black", "Pythia", "Stephanie Prince", "Suki Doll", "Synthia Kiss"],
+                "CAN S3": ["Bombae", "Chelazon Leroux", "Gisèle Lullaby", "Halal Bae", "Irma Gerd", "Jada Shada Hudson", "Kaos", "Kimmy Couture", "Lady Boom Boom", "Miss Fiercalicious", "Miss Moço", "Vivian Vanderpuss"],
+                "CAN S4": ["Aimee Yonce Shennel", "Aurora Matrix", "Denim", "Kiki Coe", "Kitten Kaboodle", "Luna DuBois", "Melinda Verga", "Nearah Nuff", "Sisi Superstar", "The Girlfriend Experience", "Venus"],
+                "Holland S1": ["Chelsea Boy", "Envy Peru", "Janey Jacké", "Madame Madness", "Ma'Ma Queen", "Megan Schoonbrood", "Miss Abby OMG", "Patty Pam-Pam", "Roem", "Sederginne"],
+                "Holland S2": ["Ivy-Elyse", "Juicy Kouture", "Keta Minaj", "Love Masisi", "My Little Puny", "Reggy B", "Tabitha", "The Countess", "Vanessa Van Cartier", "Vivaldi"],
+                "Thailand S1": ["Amadiva", "Anneé Maywong", "B Ella", "Bunny Be Fly", "Dearis Doll", "JAJA", "Meannie Minaj", "Morrigan", "Natalia Pliacam", "Petchra"],
+                "Thailand S2": ["Angele Anang", "Bandit", "Genie", "Kana Warrior", "Kandy Zyanide", "Katy Killer", "M Stranger Fox", "Maya B'Haro", "Mocha Diva", "Miss Gimhuay", "Silver Sonic", "Srimala", "Tormai", "Vanda Miss Joaquim"],
+                "Down Under S1": ["Anita Wigl'it", "Art Simone", "Coco Jumbo", "Elektra Shock (DU)", "Etcetera Etcetera", "Jojo Zaho", "Kita Mean", "Maxi Shield"],
+                "Down Under S2": ["Aubrey Haive", "Beverly Kills", "Faúx Fúr", "Hannah Conda", "Kween Kong", "Minnie Cooper", "Molly Poppinz", "Pomara Fifth", "Spankie Jackzon", "Yuri Guaii"],
+                "Down Under S3": ["Amyl", "Ashley Madison", "Bumpa Love", "Flor", "Gabriella Labucci", "Hollywould Star", "Isis Avis Loren", "Ivanna Drink", "Ivory Glaze", "Rita Menu"],
+                "España S1": ["Arantxa Castilla La Mancha", "Carmen Farala", "Dovima Nurmi", "Drag Vulcano", "Hugáceo Crujiente", "Inti", "Killer Queen", "Pupi Poisson", "Sagittaria", "The Macarena"],
+                "España S2": ["Ariel Rec", "Diamante Merybrown", "Drag Sethlas", "Estrella Xtravaganza", "Jota Carajota", "Juriji Der Klee", "Marina", "Marisa Prisa", "Onyx", "Samantha Ballentines", "Venedita Von Däsh"],
+                "España S3": ["Bestiah", "Chanel Anorex", "Clover Bish", "Drag Chuchi", "Hornella Góngora", "María Edília", "Kelly Roller", "Pakita", "Pink Chadora", "Pitita", "Vania Vainilla", "Visa"],
+                "Italia S1": ["Ava Hangar", "Divinity", "Elecktra Bionic", "Enorma Jean", "Farida Kant", "Ivana Vamp", "Le Riche", "Luquisha Lubamba"],
+                "Italia S2": ["Aura Eternal", "Gioffré", "La Diamond", "La Petite Noire", "Narciso", "Nehellenia", "Obama", "Panthera Virus", "Skandalove", "Tanissa Yoncè"],
+                "France S1": ["Elips", "Kam Hugh", "La Big Bertha", "La Briochée", "La Grande Dame", "La Kahena", "Lolita Banana", "Lova Ladiva", "Paloma", "Soa de Muse"],
+                "France S2": ["Cookie Kunty", "Ginger Bitch", "Keiona", "Kitty Space", "Mami Watta", "Moon", "Piche", "Punani", "Rose", "Sara Forever", "Vespi"],
+                "Philippines S1": ["Brigiding", "Corazon", "Eva Le Queen", "Gigi Era", "Lady Morgana", "Marina Summers", "Minty Fresh", "Precious Paula Nicole", "Prince", "Turing", "Viñas DeLuxe", "Xilhouete"],
+                "Philippines S2": ["Arizona Brandy", "Astrid Mercury", "Bernie", "DeeDee Marié Holliday", "Hana Beshie", "M1ss Jade So", "Matilduh", "Nicole Pardaux", "OV Cünt", "Tiny Deluxe"],
+            };
+
+            for (const seasonName in seasons) {
+                const btn = document.createElement('button');
+                btn.className = 'btn-secondary text-white font-bold py-2 px-4 rounded-full text-sm';
+                btn.textContent = seasonName;
+                btn.addEventListener('click', () => {
+                    originalCastData = ALL_QUEENS_DATA.filter(q => seasons[seasonName].includes(q.name));
+                    updateCurrentCastDisplay();
+                    renderSearchResults(ALL_QUEENS_DATA); // Update search results to reflect selection
+                });
+                predefinedCastsContainer.appendChild(btn);
+            }
+        }
+        
+        function renderSearchResults(queens) {
+            searchResultsContainer.innerHTML = '';
+            queens.forEach(qData => {
+                const isSelected = originalCastData.some(q => q.name === qData.name);
+                const card = document.createElement('div');
+                card.className = `queen-card rounded-lg p-2 text-center shadow-lg transition-all duration-200 ${isSelected ? 'bg-pink-600' : 'bg-gray-700'}`;
+                card.dataset.queenName = qData.name;
+                card.innerHTML = `<img src="${qData.image}" class="w-16 h-16 rounded-full mx-auto mb-2"><p class="text-xs font-medium">${qData.name}</p>`;
+                card.addEventListener('click', () => {
+                    toggleQueenSelection(qData);
+                    renderSearchResults(queens); // Re-render to update the visual state
+                });
+                searchResultsContainer.appendChild(card);
             });
         }
 
@@ -1385,6 +1480,7 @@
             
             const randomQueenData = availableQueens[Math.floor(Math.random() * availableQueens.length)];
             toggleQueenSelection(randomQueenData);
+            renderSearchResults(ALL_QUEENS_DATA); // Update search to show selection
         }
         
         function updateCurrentCastDisplay() {
@@ -1394,7 +1490,10 @@
                 card.className = 'queen-card bg-pink-900/50 rounded-lg p-1 text-center shadow-lg';
                 card.dataset.queenName = qData.name;
                 card.innerHTML = `<p class="text-xs font-medium">${qData.name}</p>`;
-                card.addEventListener('click', () => toggleQueenSelection(qData));
+                card.addEventListener('click', () => {
+                    toggleQueenSelection(qData);
+                    renderSearchResults(ALL_QUEENS_DATA); // Update search to reflect deselection
+                });
                 currentCastDisplay.appendChild(card);
             });
             castSizeInput.value = originalCastData.length;
