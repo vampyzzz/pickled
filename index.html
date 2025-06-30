@@ -1,84 +1,535 @@
-function showFinale() {
-            state.isFinale = true;
-            nextEpisodeBtn.classList.add('hidden');
-            simulationScreen.classList.add('hidden');
-            resultsScreen.classList.remove('hidden');
-            state.challengeLog.push('Finale');
-
-            const finaleFormat = document.getElementById('finale').value;
-
-            if (finaleFormat === 'top4' && state.currentCast.length === 4) {
-                // "Top 4" finale logic
-                state.currentCast.forEach(queen => queen.performanceScore = queen.getPerformance('Singing Challenge'));
-                state.currentCast.sort((a, b) => (b.performanceScore + b.ppe) - (a.performanceScore + a.ppe));
-                const lipSyncers = state.currentCast.slice(0, 2);
-                const finalists = state.currentCast.slice(2);
-
-                const winner = lipSyncers[0].getLipsyncPerformance() > lipSyncers[1].getLipsyncPerformance() ? lipSyncers[0] : lipSyncers[1];
-                const runnerUp = lipSyncers.find(q => q.name !== winner.name);
-
-                winner.addToTrackRecord("WINNER");
-                runnerUp.addToTrackRecord("RUNNER-UP");
-                finalists.forEach(q => q.addToTrackRecord("SEMI-FINALS"));
-
-                state.eliminatedCast.push(runnerUp, ...finalists);
-                state.currentCast = [winner];
-
-            } else if (finaleFormat === 'top3' && state.currentCast.length === 3) {
-                // "Top 3" finale logic
-                state.currentCast.forEach(queen => queen.performanceScore = queen.getPerformance('Music Video Challenge'));
-                state.currentCast.sort((a, b) => (b.performanceScore + b.ppe) - (a.performanceScore + a.ppe));
-                const eliminatedQueen = state.currentCast.pop();
-                const lipSyncers = state.currentCast;
-
-                const winner = lipSyncers[0].getLipsyncPerformance() > lipSyncers[1].getLipsyncPerformance() ? lipSyncers[0] : lipSyncers[1];
-                const runnerUp = lipSyncers.find(q => q.name !== winner.name);
-
-                winner.addToTrackRecord("WINNER");
-                runnerUp.addToTrackRecord("RUNNER-UP");
-                eliminatedQueen.addToTrackRecord("ELIM");
-
-                state.eliminatedCast.push(runnerUp, eliminatedQueen);
-                state.currentCast = [winner];
-            } else {
-                // Fallback to original finale logic
-                if (state.currentCast.length >= 4) {
-                    state.currentCast.sort((a,b) => b.wins - a.wins || b.ppe - a.ppe); 
-                    const semifinal1 = [state.currentCast[0], state.currentCast[3]];
-                    const semifinal2 = [state.currentCast[1], state.currentCast[2]];
-
-                    const winner1 = semifinal1[0].getLipsyncPerformance() > semifinal1[1].getLipsyncPerformance() ? semifinal1[0] : semifinal1[1];
-                    const winner2 = semifinal2[0].getLipsyncPerformance() > semifinal2[1].getLipsyncPerformance() ? semifinal2[0] : semifinal2[1];
-                    
-                    const winner = winner1.getLipsyncPerformance() > winner2.getLipsyncPerformance() ? winner1 : winner2;
-                    const runnerUp = winner === winner1 ? winner2 : winner1;
-
-                    const semiFinalists = state.currentCast.filter(q => q.name !== winner.name && q.name !== runnerUp.name);
-
-                    winner.addToTrackRecord("WINNER");
-                    runnerUp.addToTrackRecord("RUNNER-UP");
-                    semiFinalists.forEach(q => q.addToTrackRecord("SEMI-FINALS"));
-
-                    state.eliminatedCast.push(...[runnerUp, ...semiFinalists].sort((a,b) => b.ppe - a.ppe));
-                    state.currentCast = [winner];
-                } else { 
-                    state.currentCast.sort((a,b) => b.performanceScore - a.performanceScore);
-                    const winner = state.currentCast[0];
-                    const runnerUps = state.currentCast.slice(1);
-                    winner.addToTrackRecord("WINNER");
-                    runnerUps.forEach(q => q.addToTrackRecord("RUNNER-UP"));
-                    state.eliminatedCast.push(...runnerUps);
-                    state.currentCast = [winner];
-                }
-            }
-            
-            const winner = state.currentCast[0];
-            winnerDisplay.innerHTML = `<div class="text-center">
-                <h3 class="text-5xl font-bold text-yellow-400 mb-4" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">And the winner is...</h3>
-                <img src="${winner.image}" class="w-48 h-48 rounded-full mx-auto border-4 border-yellow-400 shadow-2xl">
-                <p class="text-4xl font-bold mt-4">${winner.name}!</p>
-                <p class="text-xl text-gray-500 mt-2">Condragulations, you're a winner, baby!</p>
-            </div>`;
-            
-            renderTrackRecord();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RuPaul's Drag Race Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom Styles for a more Drag-tastic feel */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #ffdde1, #ee9ca7);
+            color: #333;
+            background-image: url('https://www.transparenttextures.com/patterns/sparkles.png');
         }
+        .main-container {
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .header {
+            background: linear-gradient(to right, #d474a0, #a64ca6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .btn-primary {
+            background: linear-gradient(to right, #d474a0, #a64ca6);
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 6px 20px rgba(166, 76, 166, 0.4);
+        }
+        .btn-secondary {
+            background-color: #f1f5f9;
+            color: #4c51bf;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background-color: #e2e8f0;
+            transform: translateY(-2px);
+        }
+        .queen-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            border-radius: 12px;
+        }
+        .queen-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .queen-card.selected {
+            border: 2px solid #d474a0;
+            box-shadow: 0 0 15px rgba(212, 116, 160, 0.5);
+        }
+        .modal {
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background-color: #ffffff;
+            color: #333;
+        }
+        .track-record-table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 14px;
+        }
+
+        .track-record-table th, .track-record-table td {
+            border: 2px solid #ddd;
+            text-align: center;
+            padding: 8px;
+            
+        }
+
+        .track-record-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .tr-rank {
+            background-color: #f5ebf5;
+            font-weight: bold;
+        }
+        .tr-queen-name {
+            font-weight: bold;
+        }
+        .tr-queen-photo {
+            width: 60px;
+            height: 60px;
+            background-size: cover;
+            background-position: center;
+        }
+        .tr-ppe {
+            font-weight: bold;
+            background-color: lightgray;
+        }
+        /* Color classes for track records */
+        .tr-win { background-color: royalblue; color: white; font-weight: bold; }
+        .tr-top2 { background-color: lightgreen; }
+        .tr-high { background-color: lightblue; }
+        .tr-safe { background-color: white; }
+        .tr-safe-immune { background-color: white; border: 2px solid #a855f7 !important; }
+        .tr-low { background-color: pink; }
+        .tr-btm { background-color: tomato; }
+        .tr-elim { background-color: #E74C3C; color: white; font-weight: bold; }
+        .tr-semi-finals { background-color: sienna; color: white; font-weight: bold; }
+        .tr-guest { background-color: lightgrey; }
+        .tr-block { background-color: #4b5563; color: white; }
+        .tr-special, .tr-choc, .tr-rtrn, .tr-star, .tr-qosdadh, .tr-star-gift { background-color: #a855f7; color: white; font-weight: bold; }
+        .tr-winner { background-color: gold; font-weight: bold;}
+        .tr-runner-up { background-color: silver; font-weight: bold;}
+        .hide { display: none; }
+        .tab-button.active {
+            background-color: #d474a0;
+            color: white;
+            box-shadow: 0 4px 10px rgba(212, 116, 160, 0.3);
+        }
+        input, select {
+            background-color: #f9fafb !important;
+            border: 1px solid #d1d5db !important;
+            color: #374151 !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4">
+
+    <div id="app-container" class="main-container max-w-7xl mx-auto p-6 md:p-10 rounded-2xl my-8 shadow-2xl">
+        <header class="text-center mb-10">
+            <h1 class="header text-5xl md:text-7xl font-bold tracking-tight">RuPaul's Drag Race Simulator</h1>
+            <p class="text-gray-500 mt-3 text-xl">The Prettiest Simulator, Period.</p>
+             <nav class="mt-4">
+                <a href="predefined.html" class="text-pink-500 hover:text-pink-700 text-lg font-semibold">Predefined Casts</a>
+            </nav>
+        </header>
+
+        <main id="main-content">
+            <div id="setup-screen">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="content-left">
+                        <p class="text-lg mb-4">This is your chance to simulate a drag race season with all your favorite contestants!</p>
+                        <div class="search-wrapper mb-4">
+                            <label for="search" class="block text-lg mb-2">Choose your contestants:</label>
+                            <input type="search" id="search" class="w-full rounded-lg p-3 text-lg" placeholder="Type a name..">
+                        </div>
+                        <div class="mb-4">
+                            <button id="add-random-queen-btn" class="btn-secondary font-bold py-2 px-5 rounded-full text-sm">Add Random Queen</button>
+                        </div>
+                        <div id="search-results-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 max-h-96 overflow-y-auto p-3 bg-gray-100/70 rounded-lg">
+                            </div>
+                         <div class="mt-4">
+                            <p class="text-lg mb-2">Twists: </p>
+                             <div class="flex flex-wrap gap-x-6 gap-y-3">
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="immunity" class="w-5 h-5 text-pink-500 bg-gray-100 border-gray-300 rounded focus:ring-pink-400">
+                                    <span class="ml-2 text-md text-gray-700">Immunity</span>
+                                </label>
+                                 <label class="flex items-center">
+                                    <input type="checkbox" id="beaver" class="w-5 h-5 text-pink-500 bg-gray-100 border-gray-300 rounded focus:ring-pink-400">
+                                    <span class="ml-2 text-md text-gray-700">Golden Beaver</span>
+                                </label>
+                                 <label class="flex items-center">
+                                    <input type="checkbox" id="famegames" class="w-5 h-5 text-pink-500 bg-gray-100 border-gray-300 rounded focus:ring-pink-400">
+                                    <span class="ml-2 text-md text-gray-700">Fame Games</span>
+                                </label>
+                                  <label class="flex items-center">
+                                    <input type="checkbox" id="riggory" class="w-5 h-5 text-pink-500 bg-gray-100 border-gray-300 rounded focus:ring-pink-400" checked>
+                                    <span class="ml-2 text-md text-gray-700">Producer Riggory</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <p class="text-lg mb-2">Choose your season format: </p>
+                            <select id="format" class="w-full rounded-lg p-3 text-lg">
+                                <option value="regular">Regular</option>
+                                <option value="all-stars">All Stars</option>
+                                <option value="lipsync-assassin">Lipsync Assassin</option>
+                                <option value="all-winners">All Winners</option>
+                            </select>
+                        </div>
+
+                        <div class="mt-4">
+                            <p class="text-lg mb-2">Choose your finale format: </p>
+                            <select id="finale" class="w-full rounded-lg p-3 text-lg">
+                                <option value="top4">Top 4</option>
+                                <option value="top3">Top 3</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="content-right">
+                        <h3 class="text-2xl font-semibold mb-4 text-gray-700">Your Cast (<span id="selected-queen-count">0</span>)</h3>
+                        <div id="current-cast-display" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 min-h-[60px] p-3 bg-gray-100 rounded-lg">
+                           </div>
+                         <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+                            <button id="start-simulation-btn" class="btn-primary font-bold py-4 px-10 rounded-full text-xl">Start Simulation</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="simulation-screen" class="hidden">
+                 <div id="episode-content" class="bg-white/50 p-8 rounded-xl shadow-lg">
+                     </div>
+                 <div class="mt-8 text-center">
+                     <button id="next-episode-btn" class="btn-primary font-bold py-4 px-10 rounded-full text-xl">Proceed</button>
+                 </div>
+            </div>
+            
+            <div id="results-screen" class="hidden">
+                <div class="bg-white/50 p-8 rounded-xl shadow-lg">
+                    <h2 class="text-4xl font-bold text-center mb-6 header">Season Results</h2>
+                    <div id="winner-display" class="text-center mb-8"></div>
+                    <div id="track-record-container" class="overflow-x-auto shadow-md rounded-lg">
+                        </div>
+                    <div id="stats-container" class="mt-6">
+                       </div>
+                    <div class="mt-10 text-center space-x-4">
+                        <button id="simulate-again-btn" class="btn-primary font-bold py-3 px-8 rounded-full">Simulate Again</button>
+                        <button id="new-season-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-full">New Season</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="message-modal" class="fixed inset-0 z-50 hidden items-center justify-center modal">
+        <div class="modal-content rounded-lg shadow-xl p-8 w-11/12 md:w-1/2 lg:w-1/3 text-center">
+            <h3 id="modal-title" class="text-2xl font-bold mb-4 text-pink-500"></h3>
+            <p id="modal-message" class="text-lg"></p>
+            <div class="text-center mt-8">
+                <button id="modal-close-btn" class="btn-primary font-bold py-2 px-8 rounded-full">Close</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // --- DATA ---
+        const ALL_QUEENS_DATA = [
+             // Season 1
+            { name: "Akashia", stats: { acting: 3, comedy: 2, dance: 7, design: 3, improv: 2, runway: 7, lipsync: 11 } },
+            { name: "BeBe Zahara Benet", stats: { acting: 8, comedy: 10, dance: 8, design: 6, improv: 6, runway: 10, lipsync: 12 } },
+            { name: "Jade Sotomayor", stats: { acting: 3, comedy: 3, dance: 8, design: 7, improv: 3, runway: 7, lipsync: 9 } },
+            { name: "Nina Flowers", stats: { acting: 7, comedy: 5, dance: 8, design: 11, improv: 6, runway: 12, lipsync: 8 } },
+            { name: "Ongina", stats: { acting: 9, comedy: 8, dance: 7, design: 9, improv: 10, runway: 9, lipsync: 8 } },
+            { name: "Rebecca Glasscock", stats: { acting: 3, comedy: 3, dance: 6, design: 4, improv: 2, runway: 6, lipsync: 5 } },
+            { name: "Shannel", stats: { acting: 7, comedy: 7, dance: 8, design: 9, improv: 6, runway: 11, lipsync: 10 } },
+            { name: "Tammie Brown", stats: { acting: 15, comedy: 15, dance: 5, design: 7, improv: 15, runway: 7, lipsync: 6 } },
+            { name: "Victoria 'Porkchop' Parker", stats: { acting: 3, comedy: 6, dance: 4, design: 3, improv: 6, runway: 5, lipsync: 4 } },
+            // Season 2
+            { name: "Jessica Wild", stats: { acting: 10, comedy: 12, dance: 10, design: 10, improv: 10, runway: 9, lipsync: 11 } },
+            { name: "Jujubee", stats: { acting: 9, comedy: 11, dance: 7, design: 8, improv: 12, runway: 6, lipsync: 12 } },
+            { name: "Morgan McMichaels", stats: { acting: 6, comedy: 6, dance: 10, design: 9, improv: 5, runway: 10, lipsync: 10 } },
+            { name: "Mystique Summers", stats: { acting: 4, comedy: 5, dance: 3, design: 3, improv: 3, runway: 5, lipsync: 6 } },
+            { name: "Nicole Paige Brooks", stats: { acting: 4, comedy: 8, dance: 4, design: 6, improv: 4, runway: 7, lipsync: 6 } },
+            { name: "Pandora Boxx", stats: { acting: 12, comedy: 11, dance: 6, design: 8, improv: 10, runway: 8, lipsync: 7 } },
+            { name: "Sahara Davenport", stats: { acting: 6, comedy: 6, dance: 10, design: 4, improv: 6, runway: 7, lipsync: 10 } },
+            { name: "Shangela", stats: { acting: 14, comedy: 13, dance: 10, design: 3, improv: 9, runway: 9, lipsync: 12 } },
+            { name: "Kylie Sonique Love", stats: { acting: 11, comedy: 10, dance: 10, design: 10, improv: 10, runway: 11, lipsync: 11 } },
+            { name: "Tatianna", stats: { acting: 8, comedy: 11, dance: 8, design: 8, improv: 10, runway: 8, lipsync: 10 } },
+            { name: "King Tyra", stats: { acting: 11, comedy: 7, dance: 8, design: 12, improv: 8, runway: 10, lipsync: 10 } },
+            // Season 3
+            { name: "Alexis Mateo", stats: { acting: 14, comedy: 12, dance: 11, design: 9, improv: 10, runway: 10, lipsync: 12 } },
+            { name: "Carmen Carrera", stats: { acting: 3, comedy: 8, dance: 6, design: 4, improv: 3, runway: 7, lipsync: 7 } },
+            { name: "Delta Work", stats: { acting: 8, comedy: 9, dance: 5, design: 5, improv: 5, runway: 7, lipsync: 7 } },
+            { name: "India Ferrah", stats: { acting: 6, comedy: 4, dance: 15, design: 6, improv: 3, runway: 10, lipsync: 12 } },
+            { name: "Manila Luzon", stats: { acting: 12, comedy: 11, dance: 7, design: 14, improv: 10, runway: 13, lipsync: 9 } },
+            { name: "Mariah Paris Balenciaga", stats: { acting: 6, comedy: 9, dance: 7, design: 8, improv: 4, runway: 12, lipsync: 8 } },
+            { name: "Mimi Imfurst", stats: { acting: 11, comedy: 6, dance: 6, design: 10, improv: 7, runway: 8, lipsync: 6 } },
+            { name: "Phoenix", stats: { acting: 3, comedy: 3, dance: 6, design: 5, improv: 3, runway: 5, lipsync: 4 } },
+            { name: "Raja", stats: { acting: 11, comedy: 13, dance: 6, design: 15, improv: 12, runway: 15, lipsync: 9 } },
+            { name: "Stacy Layne Matthews", stats: { acting: 6, comedy: 11, dance: 5, design: 4, improv: 10, runway: 5, lipsync: 8 } },
+            { name: "Venus D-Lite", stats: { acting: 4, comedy: 5, dance: 8, design: 2, improv: 3, runway: 5, lipsync: 2 } },
+            { name: "Yara Sofia", stats: { acting: 11, comedy: 9, dance: 9, design: 14, improv: 7, runway: 10, lipsync: 8 } },
+            // Season 4
+            { name: "Alisa Summers", stats: { acting: 4, comedy: 4, dance: 5, design: 2, improv: 3, runway: 5, lipsync: 4 } },
+            { name: "Chad Michaels", stats: { acting: 11, comedy: 10, dance: 8, design: 9, improv: 12, runway: 10, lipsync: 8 } },
+            { name: "Dida Ritz", stats: { acting: 8, comedy: 7, dance: 13, design: 5, improv: 7, runway: 7, lipsync: 14 } },
+            { name: "Jiggly Caliente", stats: { acting: 4, comedy: 6, dance: 9, design: 4, improv: 6, runway: 7, lipsync: 10 } },
+            { name: "Kenya Olivera", stats: { acting: 9, comedy: 8, dance: 6, design: 8, improv: 8, runway: 7, lipsync: 9 } },
+            { name: "Lashauwn Beyond", stats: { acting: 4, comedy: 4, dance: 7, design: 15, improv: 5, runway: 10, lipsync: 8 } },
+            { name: "Latrice Royale", stats: { acting: 11, comedy: 8, dance: 9, design: 8, improv: 7, runway: 9, lipsync: 13 } },
+            { name: "Madame LaQueer", stats: { acting: 4, comedy: 7, dance: 6, design: 5, improv: 9, runway: 7, lipsync: 6 } },
+            { name: "Milan", stats: { acting: 4, comedy: 5, dance: 12, design: 7, improv: 5, runway: 8, lipsync: 10 } },
+            { name: "Jaremi Carey", stats: { acting: 13, comedy: 9, dance: 8, design: 13, improv: 10, runway: 10, lipsync: 8 } },
+            { name: "The Princess", stats: { acting: 4, comedy: 4, dance: 5, design: 7, improv: 4, runway: 7, lipsync: 7 } },
+            { name: "Willam", stats: { acting: 15, comedy: 12, dance: 9, design: 10, improv: 12, runway: 9, lipsync: 8 } },
+            // Season 5
+            { name: "Alaska", stats: { acting: 15, comedy: 14, dance: 7, design: 8, improv: 14, runway: 10, lipsync: 11 } },
+            { name: "Alyssa Edwards", stats: { acting: 4, comedy: 11, dance: 15, design: 6, improv: 10, runway: 9, lipsync: 12 } },
+            { name: "Coco Montrese", stats: { acting: 10, comedy: 11, dance: 11, design: 9, improv: 7, runway: 9, lipsync: 15 } },
+            { name: "Detox", stats: { acting: 10, comedy: 12, dance: 9, design: 9, improv: 8, runway: 12, lipsync: 11 } },
+            { name: "Honey Mahogany", stats: { acting: 10, comedy: 3, dance: 3, design: 6, improv: 6, runway: 8, lipsync: 4 } },
+            { name: "Ivy Winters", stats: { acting: 11, comedy: 4, dance: 8, design: 12, improv: 7, runway: 10, lipsync: 7 } },
+            { name: "Jade Jolie", stats: { acting: 5, comedy: 7, dance: 8, design: 7, improv: 8, runway: 10, lipsync: 8 } },
+            { name: "Jinkx Monsoon", stats: { acting: 15, comedy: 15, dance: 7, design: 6, improv: 15, runway: 9, lipsync: 8 } },
+            { name: "Lineysha Sparx", stats: { acting: 10, comedy: 4, dance: 7, design: 12, improv: 5, runway: 10, lipsync: 8 } },
+            { name: "Monica Beverly Hillz", stats: { acting: 4, comedy: 4, dance: 7, design: 6, improv: 3, runway: 8, lipsync: 8 } },
+            { name: "Penny Tration", stats: { acting: 4, comedy: 5, dance: 4, design: 5, improv: 5, runway: 5, lipsync: 4 } },
+            { name: "Roxxxy Andrews", stats: { acting: 8, comedy: 8, dance: 10, design: 13, improv: 8, runway: 12, lipsync: 15 } },
+            { name: "Serena ChaCha", stats: { acting: 3, comedy: 3, dance: 7, design: 4, improv: 5, runway: 5, lipsync: 8 } },
+            { name: "Vivienne Pinay", stats: { acting: 7, comedy: 3, dance: 4, design: 5, improv: 3, runway: 6, lipsync: 4 } },
+            // Season 6
+            { name: "Adore Delano", stats: { acting: 9, comedy: 11, dance: 9, design: 6, improv: 9, runway: 8, lipsync: 11 } },
+            { name: "April Carrión", stats: { acting: 5, comedy: 5, dance: 6, design: 9, improv: 5, runway: 9, lipsync: 8 } },
+            { name: "BenDeLaCreme", stats: { acting: 12, comedy: 12, dance: 8, design: 10, improv: 15, runway: 10, lipsync: 9 } },
+            { name: "Bianca Del Rio", stats: { acting: 11, comedy: 15, dance: 6, design: 13, improv: 15, runway: 10, lipsync: 5 } },
+            { name: "Courtney Act", stats: { acting: 11, comedy: 8, dance: 10, design: 10, improv: 10, runway: 12, lipsync: 9 } },
+            { name: "Darienne Lake", stats: { acting: 11, comedy: 8, dance: 7, design: 4, improv: 9, runway: 8, lipsync: 13 } },
+            { name: "Gia Gunn", stats: { acting: 10, comedy: 4, dance: 12, design: 8, improv: 4, runway: 10, lipsync: 12 } },
+            { name: "Joslyn Fox", stats: { acting: 6, comedy: 9, dance: 8, design: 6, improv: 8, runway: 8, lipsync: 11 } },
+            { name: "Kelly Mantle", stats: { acting: 15, comedy: 10, dance: 5, design: 5, improv: 10, runway: 7, lipsync: 4 } },
+            { name: "Laganja Estranja", stats: { acting: 9, comedy: 5, dance: 14, design: 8, improv: 6, runway: 10, lipsync: 15 } },
+            { name: "Magnolia Crawford", stats: { acting: 4, comedy: 5, dance: 6, design: 4, improv: 5, runway: 7, lipsync: 4 } },
+            { name: "Milk", stats: { acting: 6, comedy: 6, dance: 7, design: 11, improv: 8, runway: 13, lipsync: 7 } },
+            { name: "Trinity K. Bonet", stats: { acting: 9, comedy: 9, dance: 13, design: 12, improv: 4, runway: 10, lipsync: 15 } },
+            { name: "Vivacious", stats: { acting: 4, comedy: 5, dance: 10, design: 4, improv: 4, runway: 7, lipsync: 12 } },
+             // Season 7
+            { name: "Ginger Minj", stats: { acting: 14, comedy: 12, dance: 8, design: 9, improv: 15, runway: 7, lipsync: 9 } },
+            { name: "Jaidynn Diore Fierce", stats: { acting: 9, comedy: 9, dance: 12, design: 6, improv: 6, runway: 7, lipsync: 13 } },
+            { name: "Jasmine Masters", stats: { acting: 3, comedy: 10, dance: 6, design: 5, improv: 2, runway: 7, lipsync: 9 } },
+            { name: "Kandy Ho", stats: { acting: 4, comedy: 4, dance: 12, design: 5, improv: 4, runway: 7, lipsync: 10 } },
+            { name: "Katya", stats: { acting: 9, comedy: 12, dance: 9, design: 7, improv: 12, runway: 10, lipsync: 10 } },
+            { name: "Kennedy Davenport", stats: { acting: 9, comedy: 11, dance: 15, design: 8, improv: 11, runway: 10, lipsync: 15 } },
+            { name: "Max", stats: { acting: 10, comedy: 7, dance: 5, design: 8, improv: 4, runway: 8, lipsync: 5 } },
+            { name: "Miss Fame", stats: { acting: 8, comedy: 4, dance: 5, design: 11, improv: 3, runway: 13, lipsync: 5 } },
+            { name: "Mrs. Kasha Davis", stats: { acting: 11, comedy: 10, dance: 7, design: 4, improv: 6, runway: 8, lipsync: 8 } },
+            { name: "Pearl", stats: { acting: 7, comedy: 10, dance: 8, design: 9, improv: 10, runway: 9, lipsync: 5 } },
+            { name: "Frisbee Jenkins", stats: { acting: 6, comedy: 6, dance: 4, design: 4, improv: 6, runway: 6, lipsync: 4 } },
+            { name: "Tempest DuJour", stats: { acting: 6, comedy: 6, dance: 5, design: 3, improv: 6, runway: 7, lipsync: 4 } },
+            { name: "Trixie Mattel", stats: { acting: 13, comedy: 10, dance: 6, design: 10, improv: 11, runway: 10, lipsync: 5 } },
+            { name: "Violet Chachki", stats: { acting: 6, comedy: 7, dance: 8, design: 15, improv: 8, runway: 13, lipsync: 8 } },
+             // Season 8
+            { name: "Acid Betty", stats: { acting: 10, comedy: 5, dance: 8, design: 15, improv: 5, runway: 13, lipsync: 7 } },
+            { name: "Bob The Drag Queen", stats: { acting: 15, comedy: 15, dance: 8, design: 8, improv: 15, runway: 8, lipsync: 10 } },
+            { name: "Chi Chi DeVayne", stats: { acting: 8, comedy: 4, dance: 13, design: 8, improv: 6, runway: 8, lipsync: 13 } },
+            { name: "Cynthia Lee Fontaine", stats: { acting: 4, comedy: 4, dance: 7, design: 6, improv: 4, runway: 7, lipsync: 6 } },
+            { name: "Dax ExclamationPoint", stats: { acting: 5, comedy: 6, dance: 6, design: 5, improv: 6, runway: 5, lipsync: 4 } },
+            { name: "Derrick Barry", stats: { acting: 7, comedy: 7, dance: 8, design: 8, improv: 9, runway: 7, lipsync: 8 } },
+            { name: "Kim Chi", stats: { acting: 10, comedy: 7, dance: 4, design: 15, improv: 8, runway: 13, lipsync: 4 } },
+            { name: "Laila McQueen", stats: { acting: 6, comedy: 6, dance: 4, design: 7, improv: 6, runway: 8, lipsync: 7 } },
+            { name: "Naomi Smalls", stats: { acting: 9, comedy: 7, dance: 10, design: 14, improv: 10, runway: 12, lipsync: 11 } },
+            { name: "Naysha Lopez", stats: { acting: 6, comedy: 4, dance: 8, design: 4, improv: 5, runway: 9, lipsync: 8 } },
+            { name: "Robbie Turner", stats: { acting: 4, comedy: 5, dance: 6, design: 4, improv: 3, runway: 6, lipsync: 6 } },
+            { name: "Thorgy Thor", stats: { acting: 14, comedy: 12, dance: 6, design: 9, improv: 14, runway: 9, lipsync: 8 } },
+             // Season 9
+            { name: "Aja", stats: { acting: 4, comedy: 8, dance: 14, design: 11, improv: 9, runway: 10, lipsync: 13 } },
+            { name: "Alexis Michelle", stats: { acting: 13, comedy: 8, dance: 8, design: 8, improv: 13, runway: 7, lipsync: 10 } },
+            { name: "Eureka!", stats: { acting: 9, comedy: 11, dance: 8, design: 10, improv: 13, runway: 10, lipsync: 12 } },
+            { name: "Farrah Moan", stats: { acting: 9, comedy: 4, dance: 7, design: 3, improv: 6, runway: 8, lipsync: 7 } },
+            { name: "Jaymes Mansfield", stats: { acting: 10, comedy: 9, dance: 3, design: 8, improv: 9, runway: 10, lipsync: 5 } },
+            { name: "Kimora Blac", stats: { acting: 5, comedy: 5, dance: 4, design: 6, improv: 5, runway: 8, lipsync: 7 } },
+            { name: "Nina Bo'nina Brown", stats: { acting: 4, comedy: 10, dance: 10, design: 15, improv: 10, runway: 10, lipsync: 11 } },
+            { name: "Peppermint", stats: { acting: 11, comedy: 9, dance: 10, design: 9, improv: 4, runway: 8, lipsync: 13 } },
+            { name: "Sasha Velour", stats: { acting: 9, comedy: 10, dance: 8, design: 10, improv: 11, runway: 15, lipsync: 11 } },
+            { name: "Shea Couleé", stats: { acting: 10, comedy: 12, dance: 15, design: 13, improv: 11, runway: 15, lipsync: 15 } },
+            { name: "Trinity The Tuck", stats: { acting: 13, comedy: 11, dance: 9, design: 15, improv: 10, runway: 13, lipsync: 11 } },
+            { name: "Valentina", stats: { acting: 11, comedy: 7, dance: 10, design: 9, improv: 9, runway: 9, lipsync: 10 } },
+            // US Season 10
+            { name: "Aquaria", stats: { acting: 6, comedy: 11, dance: 8, design: 15, improv: 12, runway: 14, lipsync: 9 } },
+            { name: "Asia O'Hara", stats: { acting: 11, comedy: 9, dance: 8, design: 7, improv: 7, runway: 12, lipsync: 9 } },
+            { name: "Blair St. Clair", stats: { acting: 9, comedy: 8, dance: 6, design: 10, improv: 8, runway: 8, lipsync: 7 } },
+            { name: "Dusty Ray Bottoms", stats: { acting: 8, comedy: 8, dance: 6, design: 7, improv: 6, runway: 7, lipsync: 6 } },
+            { name: "Kalorie K. Williams", stats: { acting: 6, comedy: 6, dance: 6, design: 5, improv: 7, runway: 7, lipsync: 8 } },
+            { name: "Kameron Michaels", stats: { acting: 5, comedy: 8, dance: 14, design: 10, improv: 8, runway: 8, lipsync: 15 } },
+            { name: "Mayhem Miller", stats: { acting: 6, comedy: 8, dance: 9, design: 13, improv: 7, runway: 9, lipsync: 10 } },
+            { name: "Miz Cracker", stats: { acting: 11, comedy: 11, dance: 5, design: 10, improv: 9, runway: 9, lipsync: 8 } },
+            { name: "Monét X Change", stats: { acting: 13, comedy: 13, dance: 14, design: 9, improv: 11, runway: 11, lipsync: 15 } },
+            { name: "Mo Heart", stats: { acting: 12, comedy: 10, dance: 9, design: 12, improv: 13, runway: 12, lipsync: 11 } },
+            { name: "Vanessa 'Vanjie' Mateo", stats: { acting: 9, comedy: 11, dance: 9, design: 8, improv: 9, runway: 7, lipsync: 11 } },
+            { name: "The Vixen", stats: { acting: 5, comedy: 4, dance: 12, design: 9, improv: 3, runway: 8, lipsync: 12 } },
+            { name: "Yuhua Hamasaki", stats: { acting: 4, comedy: 4, dance: 6, design: 12, improv: 6, runway: 7, lipsync: 7 } },
+            // US Season 11
+            { name: "A'keria C. Davenport", stats: { acting: 11, comedy: 10, dance: 11, design: 8, improv: 13, runway: 13, lipsync: 10 } },
+            { name: "Ariel Versace", stats: { acting: 8, comedy: 6, dance: 6, design: 7, improv: 5, runway: 8, lipsync: 6 } },
+            { name: "Brooke Lynn Hytes", stats: { acting: 8, comedy: 8, dance: 13, design: 12, improv: 8, runway: 14, lipsync: 13 } },
+            { name: "Honey Davenport", stats: { acting: 4, comedy: 6, dance: 8, design: 4, improv: 4, runway: 9, lipsync: 4 } },
+            { name: "Kahanna Montrese", stats: { acting: 4, comedy: 5, dance: 12, design: 9, improv: 5, runway: 13, lipsync: 11 } },
+            { name: "Mercedes Iman Diamond", stats: { acting: 4, comedy: 6, dance: 8, design: 8, improv: 6, runway: 10, lipsync: 8 } },
+            { name: "Nina West", stats: { acting: 12, comedy: 11, dance: 6, design: 8, improv: 11, runway: 8, lipsync: 6 } },
+            { name: "Plastique Tiara", stats: { acting: 10, comedy: 9, dance: 10, design: 15, improv: 6, runway: 13, lipsync: 9 } },
+            { name: "Ra'Jah O'Hara", stats: { acting: 8, comedy: 8, dance: 13, design: 15, improv: 10, runway: 12, lipsync: 13 } },
+            { name: "Scarlet Envy", stats: { acting: 13, comedy: 10, dance: 7, design: 13, improv: 9, runway: 10, lipsync: 7 } },
+            { name: "Shuga Cain", stats: { acting: 10, comedy: 9, dance: 7, design: 6, improv: 7, runway: 10, lipsync: 7 } },
+            { name: "Silky Nutmeg Ganache", stats: { acting: 10, comedy: 15, dance: 12, design: 9, improv: 10, runway: 10, lipsync: 12 } },
+            { name: "Yvie Oddly", stats: { acting: 12, comedy: 7, dance: 13, design: 12, improv: 9, runway: 12, lipsync: 15 } },
+            // US Season 12
+            { name: "Aiden Zhane", stats: { acting: 9, comedy: 3, dance: 6, design: 4, improv: 3, runway: 6, lipsync: 6 } },
+            { name: "Brita", stats: { acting: 7, comedy: 8, dance: 10, design: 4, improv: 6, runway: 8, lipsync: 11 } },
+            { name: "Crystal Methyd", stats: { acting: 6, comedy: 8, dance: 8, design: 13, improv: 8, runway: 12, lipsync: 6 } },
+            { name: "Dahlia Sin", stats: { acting: 4, comedy: 4, dance: 6, design: 5, improv: 5, runway: 10, lipsync: 4 } },
+            { name: "Gigi Goode", stats: { acting: 9, comedy: 9, dance: 11, design: 10, improv: 9, runway: 12, lipsync: 8 } },
+            { name: "Heidi N Closet", stats: { acting: 10, comedy: 9, dance: 11, design: 8, improv: 12, runway: 9, lipsync: 13 } },
+            { name: "Jackie Cox", stats: { acting: 11, comedy: 12, dance: 6, design: 6, improv: 13, runway: 9, lipsync: 8 } },
+            { name: "Jaida Essence Hall", stats: { acting: 8, comedy: 5, dance: 10, design: 15, improv: 7, runway: 13, lipsync: 12 } },
+            { name: "Jan", stats: { acting: 8, comedy: 4, dance: 7, design: 9, improv: 5, runway: 10, lipsync: 9 } },
+            { name: "Nicky Doll", stats: { acting: 4, comedy: 4, dance: 5, design: 12, improv: 3, runway: 11, lipsync: 5 } },
+            { name: "Rock M. Sakura", stats: { acting: 6, comedy: 6, dance: 6, design: 4, improv: 8, runway: 8, lipsync: 7 } },
+            { name: "Widow Von'Du", stats: { acting: 11, comedy: 7, dance: 13, design: 8, improv: 11, runway: 10, lipsync: 15 } },
+             // US Season 13
+            { name: "Denali", stats: { acting: 4, comedy: 8, dance: 14, design: 9, improv: 10, runway: 8, lipsync: 13 } },
+            { name: "Gottmik", stats: { acting: 8, comedy: 11, dance: 6, design: 13, improv: 12, runway: 13, lipsync: 6 } },
+            { name: "Joey Jay", stats: { acting: 6, comedy: 7, dance: 6, design: 5, improv: 5, runway: 7, lipsync: 7 } },
+            { name: "Kahmora Hall", stats: { acting: 3, comedy: 4, dance: 3, design: 5, improv: 4, runway: 12, lipsync: 4 } },
+            { name: "Kandy Muse", stats: { acting: 9, comedy: 10, dance: 9, design: 6, improv: 10, runway: 7, lipsync: 11 } },
+            { name: "LaLa Ri", stats: { acting: 8, comedy: 10, dance: 15, design: 6, improv: 10, runway: 8, lipsync: 15 } },
+            { name: "Olivia Lux", stats: { acting: 11, comedy: 5, dance: 11, design: 10, improv: 8, runway: 11, lipsync: 8 } },
+            { name: "Rosé", stats: { acting: 12, comedy: 11, dance: 6, design: 8, improv: 10, runway: 10, lipsync: 6 } },
+            { name: "Symone", stats: { acting: 14, comedy: 7, dance: 7, design: 9, improv: 12, runway: 13, lipsync: 13 } },
+            { name: "Tamisha Iman", stats: { acting: 7, comedy: 6, dance: 7, design: 5, improv: 6, runway: 7, lipsync: 10 } },
+            { name: "Tina Burner", stats: { acting: 6, comedy: 6, dance: 10, design: 5, improv: 6, runway: 8, lipsync: 9 } },
+            { name: "Utica Queen", stats: { acting: 7, comedy: 4, dance: 6, design: 15, improv: 5, runway: 15, lipsync: 11 } },
+            // US Season 14
+            { name: "Alyssa Hunter", stats: { acting: 5, comedy: 6, dance: 7, design: 10, improv: 7, runway: 13, lipsync: 8 } },
+            { name: "Angeria Paris VanMicheals", stats: { acting: 11, comedy: 10, dance: 9, design: 12, improv: 8, runway: 11, lipsync: 8 } },
+            { name: "Bosco", stats: { acting: 11, comedy: 7, dance: 6, design: 7, improv: 8, runway: 11, lipsync: 9 } },
+            { name: "Daya Betty", stats: { acting: 9, comedy: 8, dance: 9, design: 9, improv: 9, runway: 10, lipsync: 7 } },
+            { name: "DeJa Skye", stats: { acting: 9, comedy: 8, dance: 11, design: 8, improv: 13, runway: 8, lipsync: 9 } },
+            { name: "Jasmine Kennedie", stats: { acting: 8, comedy: 7, dance: 13, design: 7, improv: 6, runway: 10, lipsync: 14 } },
+            { name: "Jorgeous", stats: { acting: 5, comedy: 5, dance: 15, design: 10, improv: 5, runway: 10, lipsync: 15 } },
+            { name: "June Jambalaya", stats: { acting: 5, comedy: 6, dance: 6, design: 4, improv: 5, runway: 6, lipsync: 6 } },
+            { name: "Kerri Colby", stats: { acting: 6, comedy: 6, dance: 5, design: 5, improv: 6, runway: 9, lipsync: 6 } },
+            { name: "Kornbread Jeté", stats: { acting: 9, comedy: 12, dance: 8, design: 5, improv: 10, runway: 8, lipsync: 10 } },
+            { name: "Lady Camden", stats: { acting: 12, comedy: 11, dance: 12, design: 11, improv: 7, runway: 10, lipsync: 11 } },
+            { name: "Maddy Morphosis", stats: { acting: 9, comedy: 12, dance: 6, design: 8, improv: 10, runway: 9, lipsync: 7 } },
+            { name: "Orion Story", stats: { acting: 4, comedy: 6, dance: 6, design: 9, improv: 6, runway: 6, lipsync: 5 } },
+            { name: "Willow Pill", stats: { acting: 11, comedy: 11, dance: 7, design: 12, improv: 8, runway: 13, lipsync: 8 } },
+            // US Season 15
+            { name: "Amethyst", stats: { acting: 4, comedy: 9, dance: 8, design: 5, improv: 10, runway: 7, lipsync: 9 } },
+            { name: "Anetra", stats: { acting: 8, comedy: 9, dance: 12, design: 10, improv: 8, runway: 9, lipsync: 14 } },
+            { name: "Aura Mayari", stats: { acting: 5, comedy: 5, dance: 6, design: 7, improv: 6, runway: 9, lipsync: 7 } },
+            { name: "Irene Dubois", stats: { acting: 4, comedy: 5, dance: 4, design: 4, improv: 4, runway: 8, lipsync: 6 } },
+            { name: "Jax", stats: { acting: 5, comedy: 7, dance: 15, design: 9, improv: 6, runway: 8, lipsync: 15 } },
+            { name: "Loosey LaDuca", stats: { acting: 11, comedy: 13, dance: 6, design: 8, improv: 13, runway: 8, lipsync: 6 } },
+            { name: "Luxx Noir London", stats: { acting: 10, comedy: 11, dance: 9, design: 15, improv: 9, runway: 14, lipsync: 10 } },
+            { name: "Malaysia Babydoll Foxx", stats: { acting: 9, comedy: 8, dance: 7, design: 8, improv: 7, runway: 9, lipsync: 8 } },
+            { name: "Marcia Marcia Marcia", stats: { acting: 9, comedy: 9, dance: 8, design: 8, improv: 9, runway: 8, lipsync: 9 } },
+            { name: "Mistress Isabelle Brooks", stats: { acting: 8, comedy: 15, dance: 8, design: 13, improv: 12, runway: 13, lipsync: 9 } },
+            { name: "Robin Fierce", stats: { acting: 7, comedy: 7, dance: 11, design: 10, improv: 6, runway: 10, lipsync: 11 } },
+            { name: "Salina EsTitties", stats: { acting: 9, comedy: 8, dance: 8, design: 8, improv: 8, runway: 6, lipsync: 11 } },
+            { name: "Sasha Colby", stats: { acting: 9, comedy: 10, dance: 15, design: 13, improv: 9, runway: 15, lipsync: 15 } },
+            { name: "Spice", stats: { acting: 8, comedy: 6, dance: 5, design: 8, improv: 5, runway: 10, lipsync: 5 } },
+            { name: "Sugar", stats: { acting: 9, comedy: 7, dance: 5, design: 6, improv: 5, runway: 12, lipsync: 5 } },
+             // US Season 16
+            { name: "Amanda Tori Meating", stats: { acting: 7, comedy: 9, dance: 9, design: 6, improv: 8, runway: 5, lipsync: 8 } },
+            { name: "Dawn", stats: { acting: 6, comedy: 6, dance: 6, design: 10, improv: 5, runway: 10, lipsync: 6 } },
+            { name: "Geneva Karr", stats: { acting: 6, comedy: 6, dance: 9, design: 5, improv: 6, runway: 8, lipsync: 8 } },
+            { name: "Hershii LiqCour-Jeté", stats: { acting: 4, comedy: 10, dance: 7, design: 6, improv: 8, runway: 7, lipsync: 6 } },
+            { name: "Megami", stats: { acting: 7, comedy: 6, dance: 9, design: 10, improv: 6, runway: 8, lipsync: 8 } },
+            { name: "Mhi'ya Iman LePaige", stats: { acting: 6, comedy: 7, dance: 11, design: 6, improv: 7, runway: 8, lipsync: 13 } },
+            { name: "Mirage", stats: { acting: 5, comedy: 6, dance: 12, design: 7, improv: 6, runway: 6, lipsync: 10 } },
+            { name: "Morphine Love Dion", stats: { acting: 6, comedy: 8, dance: 10, design: 8, improv: 6, runway: 10, lipsync: 12 } },
+            { name: "Nymphia Wind", stats: { acting: 7, comedy: 8, dance: 9, design: 15, improv: 5, runway: 13, lipsync: 8 } },
+            { name: "Plane Jane", stats: { acting: 10, comedy: 11, dance: 9, design: 9, improv: 12, runway: 11, lipsync: 10 } },
+            { name: "Plasma", stats: { acting: 11, comedy: 9, dance: 8, design: 6, improv: 9, runway: 9, lipsync: 8 } },
+            { name: "Q", stats: { acting: 9, comedy: 8, dance: 4, design: 15, improv: 8, runway: 12, lipsync: 5 } },
+            { name: "Sapphira Cristál", stats: { acting: 11, comedy: 12, dance: 9, design: 11, improv: 11, runway: 12, lipsync: 9 } },
+            { name: "Xunami Muse", stats: { acting: 6, comedy: 5, dance: 8, design: 7, improv: 5, runway: 10, lipsync: 8 } },
+            // UK Season 1
+            { name: "Baga Chipz", stats: { acting: 13, comedy: 12, dance: 5, design: 5, improv: 13, runway: 8, lipsync: 7 } },
+            { name: "Blu Hydrangea", stats: { acting: 5, comedy: 8, dance: 6, design: 10, improv: 10, runway: 12, lipsync: 7 } },
+            { name: "Cheryl Hole", stats: { acting: 5, comedy: 9, dance: 8, design: 5, improv: 9, runway: 7, lipsync: 9 } },
+            { name: "Crystal (UK)", stats: { acting: 6, comedy: 5, dance: 6, design: 9, improv: 4, runway: 8, lipsync: 6 } },
+            { name: "Divina De Campo", stats: { acting: 11, comedy: 6, dance: 9, design: 12, improv: 9, runway: 9, lipsync: 9 } },
+            { name: "Gothy Kendoll", stats: { acting: 5, comedy: 4, dance: 4, design: 8, improv: 2, runway: 9, lipsync: 4 } },
+            { name: "Scaredy Kat", stats: { acting: 3, comedy: 5, dance: 6, design: 4, improv: 4, runway: 7, lipsync: 4 } },
+            { name: "Sum Ting Wong", stats: { acting: 8, comedy: 6, dance: 6, design: 7, improv: 6, runway: 9, lipsync: 8 } },
+            { name: "The Vivienne", stats: { acting: 12, comedy: 13, dance: 8, design: 10, improv: 14, runway: 11, lipsync: 12 } },
+            { name: "Vinegar Strokes", stats: { acting: 7, comedy: 6, dance: 6, design: 4, improv: 4, runway: 6, lipsync: 6 } },
+             // UK Season 2
+            { name: "A'Whora", stats: { acting: 7, comedy: 5, dance: 8, design: 15, improv: 10, runway: 10, lipsync: 8 } },
+            { name: "Asttina Mandella", stats: { acting: 6, comedy: 6, dance: 13, design: 8, improv: 6, runway: 10, lipsync: 12 } },
+            { name: "Bimini", stats: { acting: 11, comedy: 14, dance: 10, design: 7, improv: 11, runway: 11, lipsync: 11 } },
+            { name: "Cherry Valentine", stats: { acting: 5, comedy: 6, dance: 5, design: 7, improv: 6, runway: 11, lipsync: 4 } },
+            { name: "Ellie Diamond", stats: { acting: 10, comedy: 6, dance: 7, design: 11, improv: 8, runway: 9, lipsync: 8 } },
+            { name: "Ginny Lemon", stats: { acting: 6, comedy: 6, dance: 5, design: 5, improv: 5, runway: 8, lipsync: 4 } },
+            { name: "Joe Black", stats: { acting: 5, comedy: 5, dance: 4, design: 5, improv: 4, runway: 8, lipsync: 5 } },
+            { name: "Lawrence Chaney", stats: { acting: 13, comedy: 12, dance: 7, design: 12, improv: 9, runway: 11, lipsync: 10 } },
+            { name: "Sister Sister", stats: { acting: 6, comedy: 8, dance: 6, design: 4, improv: 7, runway: 8, lipsync: 9 } },
+            { name: "Tayce", stats: { acting: 10, comedy: 9, dance: 10, design: 5, improv: 9, runway: 12, lipsync: 11 } },
+            { name: "Tia Kofi", stats: { acting: 9, comedy: 13, dance: 9, design: 6, improv: 11, runway: 8, lipsync: 10 } },
+            { name: "Veronica Green", stats: { acting: 10, comedy: 9, dance: 6, design: 8, improv: 9, runway: 7, lipsync: 9 } },
+            // UK Season 3
+            { name: "Anubis", stats: { acting: 5, comedy: 5, dance: 5, design: 4, improv: 5, runway: 4, lipsync: 4 } },
+            { name: "Charity Kase", stats: { acting: 8, comedy: 6, dance: 4, design: 12, improv: 6, runway: 13, lipsync: 8 } },
+            { name: "Choriza May", stats: { acting: 9, comedy: 10, dance: 6, design: 7, improv: 6, runway: 10, lipsync: 7 } },
+            { name: "Elektra Fence", stats: { acting: 5, comedy: 6, dance: 10, design: 4, improv: 5, runway: 8, lipsync: 10 } },
+            { name: "Ella Vaday", stats: { acting: 9, comedy: 12, dance: 6, design: 10, improv: 12, runway: 9, lipsync: 5 } },
+            { name: "Kitty Scott-Claus", stats: { acting: 12, comedy: 13, dance: 7, design: 8, improv: 10, runway: 9, lipsync: 7 } },
+            { name: "Krystal Versace", stats: { acting: 8, comedy: 6, dance: 11, design: 9, improv: 7, runway: 15, lipsync: 12 } },
+            { name: "River Medway", stats: { acting: 8, comedy: 9, dance: 5, design: 9, improv: 5, runway: 7, lipsync: 6 } },
+            { name: "Scarlett Harlett", stats: { acting: 7, comedy: 10, dance: 6, design: 11, improv: 9, runway: 11, lipsync: 9 } },
+            { name: "Vanity Milan", stats: { acting: 8, comedy: 8, dance: 15, design: 7, improv: 8, runway: 10, lipsync: 15 } },
+            { name: "Victoria Scone", stats: { acting: 11, comedy: 10, dance: 8, design: 10, improv: 8, runway: 10, lipsync: 9 } },
+            // UK Season 4
+            { name: "Baby", stats: { acting: 6, comedy: 6, dance: 9, design: 10, improv: 4, runway: 9, lipsync: 11 } },
+            { name: "Black Peppa", stats: { acting: 5, comedy: 4, dance: 11, design: 4, runway: 13, lipsync: 13 } },
+            { name: "Cheddar Gorgeous", stats: { acting: 12, comedy: 9, dance: 7, design: 10, improv: 13, runway: 14, lipsync: 8 } },
+            { name: "Copper Topp", stats: { acting: 5, comedy: 4, dance: 9, design: 7, improv: 6, runway: 7, lipsync: 8 } },
+            { name: "Dakota Schiffer", stats: { acting: 6, comedy: 9, dance: 9, design: 10, improv: 9, runway: 11, lipsync: 8 } },
+            { name: "Danny Beard", stats: { acting: 12, comedy: 10, dance: 11, design: 8, improv: 11, runway: 13, lipsync: 9 } },
+            { name: "Jonbers Blonde", stats: { acting: 5, comedy: 10, dance: 8, design: 7, improv: 9, runway: 9, lipsync: 9 } },
+            { name: "Just May", stats: { acting: 4, comedy: 4, dance: 4, design: 4, improv: 4, runway: 4, lipsync: 4 } },
+            { name: "Le Fil", stats: { acting: 6, comedy: 5, dance: 8, design: 9, improv: 5, runway: 12, lipsync: 9 } },
+            { name: "Pixie Polite", stats: { acting: 7, comedy: 5, dance: 9, design: 8, improv: 8, runway: 9, lipsync: 9 } },
+            { name: "Sminty Drop", stats: { acting: 5, comedy: 6, dance: 5, design: 9, improv: 4, runway: 14, lipsync: 8 } },
+            { name: "Starlet", stats: { acting: 4, comedy: 4, dance: 4, design: 4, improv: 4, runway: 13, lipsync: 5 } },
+             // UK Season 5
+            { name: "Alexis Saint-Pete", stats: { acting: 4, comedy: 4, dance: 4, design: 4, improv: 4, runway: 8, lipsync: 7 } },
+            { name: "Banksie", stats: { acting: 6, comedy: 6, dance: 6, design: 11, improv: 7, runway: 12, lipsync: 7 } },
+            { name: "Cara Melle", stats: { acting: 5, comedy: 5, dance: 12, design: 8, improv: 7, runway: 13, lipsync: 12 } },
+            { name: "DeDeLicious", stats: { acting: 8, comedy: 5, dance: 8, design: 13, improv: 6, runway: 10, lipsync: 12 } },
+            { name: "Ginger Johnson", stats: { acting: 11, comedy: 12, dance: 11, design: 9, improv: 13, runway: 10, lipsync: 8 } },
+            { name: "Kate Butch", stats: { acting: 10, comedy: 9, dance: 9, design: 8, improv: 9, runway: 8, lipsync: 8 } },
+            { name: "Michael Marouli", stats: { acting: 6, comedy: 10, dance: 9, design: 8, improv: 10, runway: 12, lipsync: 10 } },
+            { name: "Miss Naomi Carter", stats: { acting: 6, comedy: 6, dance: 8, design: 4, improv: 6, runway: 9, lipsync: 9 } },
+            { name: "Tomara Thomas", stats: { acting: 8, comedy: 8, dance: 15, design: 7, improv: 10, runway: 9, lipsync: 12 } },
+            { name: "Vicki Vivacious", stats: { acting: 7, comedy: 6, dance: 7, design: 10, improv: 5, runway: 11, lipsync: 7 } },
+            // CAN Season 1
+            { name: "Anastarzia Anaquway", stats: { acting: 7, comedy: 6, dance: 4, design: 13, improv: 6, runway: 8, lipsync: 9 } },
+            { name: "BOA", stats: { acting: 6, comedy: 6, dance: 5, design: 5, improv: 6, runway: 7, lipsync: 7 } },
+            { name: "Ilona Verley", stats: { acting: 5, comedy: 8, dance: 5, design: 8, improv: 9, runway: 10, lipsync: 10 } },
+            { name: "Jimbo", stats: { acting: 10, comedy: 13, dance: 2, design: 13, improv: 15, runway: 11, lipsync: 2 } },
+            { name: "Juice Boxx", stats: { acting: 6, comedy: 6, dance: 6, design: 4, improv: 6, runway: 6, lipsync: 10 } },
+            { name: "Kiara", stats: { acting: 10, comedy: 6, dance: 8, design: 11, improv: 6, runway: 9, lipsync: 11 } },
+            { name: "Kyne", stats: { acting: 8, comedy: 6, dance: 6, design: 7, improv: 6, runway: 6, lipsync: 7 } },
+            { name: "Lemon", stats: { acting: 10, comedy: 9, dance: 12, design: 6, improv: 11, runway: 9, lipsync: 12 } },
+            { name: "Priyanka", stats: { acting: 14, comedy: 12, dance: 12, design: 5, improv: 6, runway: 10, lipsync: 13 } },
+            { name: "Rita Baga", stats: { acting: 11, comedy: 10, dance: 8, design: 3, improv: 10, runway: 7, lipsync: 7 } },
+            { name:.
