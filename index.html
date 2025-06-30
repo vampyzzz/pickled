@@ -930,13 +930,18 @@
         function runNextEpisode() {
             if (state.isFinale) return;
             state.episodeCount++;
-             if (state.seasonFormat === 'all-winners' && state.episodeCount > 7) { 
+            const finaleFormat = document.getElementById('finale').value;
+
+            if (state.seasonFormat === 'all-winners' && state.episodeCount > 7) { 
                 showAllWinnersFinale();
                 return;
             }
-             if (state.currentCast.length <= 4 && state.seasonFormat !== 'all-winners') {
-                runFinaleEpisode();
-                return;
+
+            if (state.seasonFormat !== 'all-winners') {
+                if ((finaleFormat === 'top4' && state.currentCast.length <= 4) || (finaleFormat === 'top3' && state.currentCast.length <= 3)) {
+                    runFinaleEpisode();
+                    return;
+                }
             }
             
             state.currentCast.forEach(q => {
@@ -1349,44 +1354,30 @@
                 state.eliminatedCast.push(runnerUp, eliminatedQueen);
                 state.currentCast = [winner];
             } else {
-                 // Fallback to original finale logic
-                if(state.currentCast.length === 4) {
-                    state.currentCast.sort((a,b) => b.wins - a.wins || b.ppe - a.ppe); // Seed based on performance
-                    const semifinal1 = [state.currentCast[0], state.currentCast[3]];
-                    const semifinal2 = [state.currentCast[1], state.currentCast[2]];
-
-                    const winner1 = semifinal1[0].getLipsyncPerformance() > semifinal1[1].getLipsyncPerformance() ? semifinal1[0] : semifinal1[1];
-                    const winner2 = semifinal2[0].getLipsyncPerformance() > semifinal2[1].getLipsyncPerformance() ? semifinal2[0] : semifinal2[1];
-                    
-                    const winner = winner1.getLipsyncPerformance() > winner2.getLipsyncPerformance() ? winner1 : winner2;
-                    const runnerUp = winner === winner1 ? winner2 : winner1;
-
-                    const semiFinalists = state.currentCast.filter(q => q.name !== winner.name && q.name !== runnerUp.name);
-
-                    winner.addToTrackRecord("WINNER");
-                    runnerUp.addToTrackRecord("RUNNER-UP");
-                    semiFinalists.forEach(q => q.addToTrackRecord("SEMI-FINALS"));
-
-                    state.eliminatedCast.push(...[runnerUp, ...semiFinalists].sort((a,b) => b.ppe - a.ppe));
-                    state.currentCast = [winner];
-                } else { // Top 3 Finale
-                    state.currentCast.sort((a,b) => b.performanceScore - a.performanceScore);
+                // Generic fallback for any other number of finalists
+                if (state.currentCast.length >= 2) {
+                    state.currentCast.sort((a,b) => b.ppe - a.ppe);
                     const winner = state.currentCast[0];
                     const runnerUps = state.currentCast.slice(1);
                     winner.addToTrackRecord("WINNER");
-                    runnerUps.forEach(q => q.addToTrackRecord("RUNNER-UP"));
+                    runnerUps.forEach(r => r.addToTrackRecord("RUNNER-UP"));
                     state.eliminatedCast.push(...runnerUps);
                     state.currentCast = [winner];
+                } else if (state.currentCast.length === 1) {
+                    // Already a winner
+                    state.currentCast[0].addToTrackRecord("WINNER");
                 }
             }
             
             const winner = state.currentCast[0];
-            winnerDisplay.innerHTML = `<div class="text-center">
-                <h3 class="text-5xl font-bold text-yellow-400 mb-4" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">And the winner is...</h3>
-                <img src="${winner.image}" class="w-48 h-48 rounded-full mx-auto border-4 border-yellow-400 shadow-2xl">
-                <p class="text-4xl font-bold mt-4">${winner.name}!</p>
-                <p class="text-xl text-gray-500 mt-2">Condragulations, you're a winner, baby!</p>
-            </div>`;
+            if(winner){
+                winnerDisplay.innerHTML = `<div class="text-center">
+                    <h3 class="text-5xl font-bold text-yellow-400 mb-4" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">And the winner is...</h3>
+                    <img src="${winner.image}" class="w-48 h-48 rounded-full mx-auto border-4 border-yellow-400 shadow-2xl">
+                    <p class="text-4xl font-bold mt-4">${winner.name}!</p>
+                    <p class="text-xl text-gray-500 mt-2">Condragulations, you're a winner, baby!</p>
+                </div>`;
+            }
             
             renderTrackRecord();
         }
