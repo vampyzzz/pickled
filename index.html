@@ -5,120 +5,144 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RuPaul's Drag Race Simulator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         /* Custom Styles for a more Drag-tastic feel */
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #1a1a1a;
-            color: #f3f4f6;
-            background-image: url('https://www.transparenttextures.com/patterns/glamorous.png');
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #ffdde1, #ee9ca7);
+            color: #333;
+            background-image: url('https://www.transparenttextures.com/patterns/sparkles.png');
         }
         .main-container {
-            background-color: rgba(26, 26, 26, 0.9);
-            backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         .header {
-            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            background: linear-gradient(to right, #d474a0, #a64ca6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         .btn-primary {
-            background: linear-gradient(to right, #da4453, #89216b);
+            background: linear-gradient(to right, #d474a0, #a64ca6);
+            color: white;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
         .btn-primary:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(218, 68, 83, 0.5);
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 6px 20px rgba(166, 76, 166, 0.4);
         }
         .btn-secondary {
-            background-color: #4a5568;
+            background-color: #f1f5f9;
+            color: #4c51bf;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
         }
         .btn-secondary:hover {
-            background-color: #2d3748;
+            background-color: #e2e8f0;
+            transform: translateY(-2px);
         }
         .queen-card {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             cursor: pointer;
+            border-radius: 12px;
         }
         .queen-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .queen-card.selected {
+            border: 2px solid #d474a0;
+            box-shadow: 0 0 15px rgba(212, 116, 160, 0.5);
         }
         .modal {
-            background-color: rgba(0, 0, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(5px);
         }
         .modal-content {
-            background-color: #2d2d2d;
+            background-color: #ffffff;
+            color: #333;
         }
         .track-record-table {
-            background-color: rgba(45, 45, 45, 0.8);
+            background-color: rgba(255, 255, 255, 0.7);
             border-collapse: separate;
             border-spacing: 0;
             overflow: hidden;
             width: 100%;
         }
         .track-record-table th, .track-record-table td {
-            border: 1px solid #4a4a4a;
-            padding: 8px;
+            border: 1px solid #e2e8f0;
+            padding: 12px;
             text-align: center;
-            vertical-align: top;
+            vertical-align: middle; /* Changed from top */
+        }
+        .track-record-table th {
+            background-color: rgba(238, 156, 167, 0.2);
+            color: #a64ca6;
         }
         /* Custom scrollbar */
         ::-webkit-scrollbar {
-            width: 8px;
+            width: 10px;
         }
         ::-webkit-scrollbar-track {
-            background: #2d2d2d;
+            background: #ffdde1;
         }
         ::-webkit-scrollbar-thumb {
-            background: #89216b;
+            background: #d474a0;
             border-radius: 10px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #da4453;
+            background: #a64ca6;
         }
         /* Color classes for track records */
-        .tr-win { background-color: #4A90E2; color: white; font-weight: bold; }
-        .tr-top2 { background-color: #2dd4bf; color: #1a1a1a; font-weight: bold; } /* Cyan for LSFYL loser */
-        .tr-high { background-color: #BDE5F8; color: #1a1a1a; }
-        .tr-safe { background-color: #FFFFFF; color: #1a1a1a; }
-        .tr-safe-immune { background-color: #FFFFFF; color: #1a1a1a; border: 2px solid #8b5cf6 !important; }
-        .tr-low { background-color: #F8C471; color: #1a1a1a; }
-        .tr-btm { background-color: #F5B7B1; color: #1a1a1a; }
-        .tr-elim, .tr-semi-finals { background-color: #E74C3C; color: white; font-weight: bold; }
-        .tr-guest { background-color: #9E9E9E; color: white; }
-        .tr-block { background-color: #7f1d1d; color: white; }
-        .tr-special, .tr-choc, .tr-rtrn, .tr-star, .tr-qosdadh, .tr-star-gift { background-color: #A569BD; color: white; font-weight: bold; }
-        .tr-winner { background-color: gold; color: #1a1a1a; font-weight: bold;}
-        .tr-runner-up { background-color: silver; color: #1a1a1a; font-weight: bold;}
+        .tr-win { background-color: #60a5fa; color: white; font-weight: bold; }
+        .tr-top2 { background-color: #34d399; color: white; font-weight: bold; }
+        .tr-high { background-color: #93c5fd; color: #1e3a8a; }
+        .tr-safe { background-color: #f8fafc; color: #475569; }
+        .tr-safe-immune { background-color: #f8fafc; color: #475569; border: 2px solid #a855f7 !important; }
+        .tr-low { background-color: #fcd34d; color: #b45309; }
+        .tr-btm { background-color: #fb7185; color: #9f1239; }
+        .tr-elim, .tr-semi-finals { background-color: #ef4444; color: white; font-weight: bold; }
+        .tr-guest { background-color: #9ca3af; color: white; }
+        .tr-block { background-color: #4b5563; color: white; }
+        .tr-special, .tr-choc, .tr-rtrn, .tr-star, .tr-qosdadh, .tr-star-gift { background-color: #a855f7; color: white; font-weight: bold; }
+        .tr-winner { background-color: #facc15; color: #78350f; font-weight: bold;}
+        .tr-runner-up { background-color: #d1d5db; color: #4b5563; font-weight: bold;}
         .hide { display: none; }
         .tab-button.active {
-            background-color: #89216b;
+            background-color: #d474a0;
+            color: white;
+            box-shadow: 0 4px 10px rgba(212, 116, 160, 0.3);
+        }
+        input, select {
+            background-color: #f9fafb !important;
+            border: 1px solid #d1d5db !important;
+            color: #374151 !important;
         }
     </style>
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen p-4">
 
-    <div id="app-container" class="main-container max-w-7xl mx-auto p-4 md:p-8 rounded-lg my-8">
-        <header class="text-center mb-8">
-            <h1 class="header text-4xl md:text-6xl font-bold tracking-tight">RuPaul's Drag Race Simulator</h1>
-            <p class="text-gray-400 mt-2 text-lg">Shantay, you stay... and simulate!</p>
+    <div id="app-container" class="main-container max-w-7xl mx-auto p-6 md:p-10 rounded-2xl my-8 shadow-2xl">
+        <header class="text-center mb-10">
+            <h1 class="header text-5xl md:text-7xl font-bold tracking-tight">RuPaul's Drag Race Simulator</h1>
+            <p class="text-gray-500 mt-3 text-xl">The Prettiest Simulator, Period.</p>
         </header>
 
         <main id="main-content">
             <div id="setup-screen">
-                <div class="bg-gray-800 p-6 rounded-lg shadow-2xl">
-                    <h2 class="text-2xl font-semibold mb-4 text-center">Create Your Season</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white/50 p-8 rounded-xl shadow-lg">
+                    <h2 class="text-3xl font-semibold mb-6 text-center text-gray-700">Create Your Season</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
-                            <label for="cast-size" class="block mb-2 text-sm font-medium text-gray-300">Number of Queens</label>
-                            <input type="number" id="cast-size" class="w-full bg-gray-700 border-gray-600 text-white rounded-lg p-2.5" value="0" min="5" max="20" readonly>
+                            <label for="cast-size" class="block mb-2 text-sm font-medium text-gray-600">Number of Queens</label>
+                            <input type="number" id="cast-size" class="w-full rounded-lg p-3 text-lg" value="0" min="5" max="20" readonly>
                         </div>
                         <div>
-                            <label for="format" class="block mb-2 text-sm font-medium text-gray-300">Season Format</label>
-                            <select id="format" class="w-full bg-gray-700 border-gray-600 text-white rounded-lg p-2.5">
+                            <label for="format" class="block mb-2 text-sm font-medium text-gray-600">Season Format</label>
+                            <select id="format" class="w-full rounded-lg p-3 text-lg">
                                 <option value="regular">Regular Season</option>
                                 <option value="all-stars">All Stars</option>
                                 <option value="lipsync-assassin">All Stars (Lipsync Assassin)</option>
@@ -126,69 +150,72 @@
                             </select>
                         </div>
                     </div>
-                    <div class="mt-4">
-                        <label class="block mb-2 text-sm font-medium text-gray-300">Special Twists</label>
-                        <div class="flex flex-wrap gap-4">
+                    <div class="mt-6">
+                        <label class="block mb-3 text-sm font-medium text-gray-600">Special Twists</label>
+                        <div class="flex flex-wrap gap-x-6 gap-y-3">
                             <label class="flex items-center">
-                                <input type="checkbox" id="immunity" class="w-4 h-4 text-pink-600 bg-gray-700 border-gray-600 rounded focus:ring-pink-500">
-                                <span class="ml-2 text-sm text-gray-300">Immunity Twist</span>
+                                <input type="checkbox" id="immunity" class="w-5 h-5 text-pink-500 bg-gray-100 border-gray-300 rounded focus:ring-pink-400">
+                                <span class="ml-2 text-md text-gray-700">Immunity Twist</span>
                             </label>
                             <label class="flex items-center">
-                                <input type="checkbox" id="chocolate-bar" class="w-4 h-4 text-pink-600 bg-gray-700 border-gray-600 rounded focus:ring-pink-500">
-                                <span class="ml-2 text-sm text-gray-300">Golden Chocolate Bar</span>
+                                <input type="checkbox" id="chocolate-bar" class="w-5 h-5 text-pink-500 bg-gray-100 border-gray-300 rounded focus:ring-pink-400">
+                                <span class="ml-2 text-md text-gray-700">Golden Chocolate Bar</span>
                             </label>
                             <label class="flex items-center">
-                                <input type="checkbox" id="riggory" class="w-4 h-4 text-pink-600 bg-gray-700 border-gray-600 rounded focus:ring-pink-500">
-                                <span class="ml-2 text-sm text-gray-300">Producer Riggory</span>
+                                <input type="checkbox" id="riggory" class="w-5 h-5 text-pink-500 bg-gray-100 border-gray-300 rounded focus:ring-pink-400">
+                                <span class="ml-2 text-md text-gray-700">Producer Riggory</span>
                             </label>
                         </div>
                     </div>
-                     <div class="mt-6">
-                        <h3 class="text-xl font-semibold mb-3">Your Cast (<span id="selected-queen-count">0</span>)</h3>
-                        <div id="current-cast-display" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 min-h-[50px] p-2 bg-gray-900 rounded-lg">
+                     <div class="mt-8">
+                        <h3 class="text-2xl font-semibold mb-4 text-gray-700">Your Cast (<span id="selected-queen-count">0</span>)</h3>
+                        <div id="current-cast-display" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 min-h-[60px] p-3 bg-gray-100 rounded-lg">
                            </div>
-                        <div class="flex justify-center space-x-2 my-4">
-                            <button id="predefined-tab-btn" class="tab-button btn-secondary text-white font-bold py-2 px-4 rounded-full active">Predefined Casts</button>
-                            <button id="search-tab-btn" class="tab-button btn-secondary text-white font-bold py-2 px-4 rounded-full">Search Queens</button>
+                        <div class="flex justify-center space-x-4 my-6">
+                            <button id="predefined-tab-btn" class="tab-button btn-secondary text-gray-700 font-bold py-2 px-6 rounded-full active">Predefined Casts</button>
+                            <button id="search-tab-btn" class="tab-button btn-secondary text-gray-700 font-bold py-2 px-6 rounded-full">Search Queens</button>
                         </div>
 
                         <div id="predefined-casts-tab">
-                             <div id="predefined-casts-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-80 overflow-y-auto p-2 bg-gray-900/50 rounded-lg">
+                             <h4 class="text-lg font-medium text-gray-600 mb-3">Select a Season</h4>
+                             <div id="predefined-casts-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-80 overflow-y-auto p-3 bg-gray-100/70 rounded-lg">
                                 </div>
                         </div>
 
                         <div id="search-queens-tab" class="hidden">
-                            <input type="search" id="queen-search-input" class="w-full bg-gray-700 border-gray-600 text-white rounded-lg p-2.5 mb-2" placeholder="Search for a queen...">
-                            <div id="search-results-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 max-h-80 overflow-y-auto p-2 bg-gray-900/50 rounded-lg">
+                            <input type="search" id="queen-search-input" class="w-full rounded-lg p-3 mb-4 text-lg" placeholder="Search for a queen...">
+                            <div id="search-results-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 max-h-96 overflow-y-auto p-3 bg-gray-100/70 rounded-lg">
                                 </div>
-                             <button id="add-random-queen-btn" class="btn-secondary text-white font-bold py-2 px-4 rounded-full text-sm mt-4">Add Random Queen</button>
+                             <div class="text-center">
+                                <button id="add-random-queen-btn" class="btn-secondary font-bold py-2 px-5 rounded-full text-sm mt-4">Add Random Queen</button>
+                             </div>
                         </div>
                     </div>
-                    <div class="mt-6 text-center">
-                        <button id="start-simulation-btn" class="btn-primary text-white font-bold py-3 px-8 rounded-full text-lg">Start Simulation</button>
+                    <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+                        <button id="start-simulation-btn" class="btn-primary font-bold py-4 px-10 rounded-full text-xl">Start Simulation</button>
                     </div>
                 </div>
             </div>
 
             <div id="simulation-screen" class="hidden">
-                 <div id="episode-content" class="bg-gray-800 p-6 rounded-lg shadow-2xl">
+                 <div id="episode-content" class="bg-white/50 p-8 rounded-xl shadow-lg">
                      </div>
-                 <div class="mt-6 text-center">
-                     <button id="next-episode-btn" class="btn-primary text-white font-bold py-3 px-8 rounded-full text-lg">Proceed</button>
+                 <div class="mt-8 text-center">
+                     <button id="next-episode-btn" class="btn-primary font-bold py-4 px-10 rounded-full text-xl">Proceed</button>
                  </div>
             </div>
             
             <div id="results-screen" class="hidden">
-                <div class="bg-gray-800 p-6 rounded-lg shadow-2xl">
-                    <h2 class="text-3xl font-bold text-center mb-4 header">Season Results</h2>
-                    <div id="winner-display" class="text-center mb-6"></div>
-                    <div id="track-record-container" class="overflow-x-auto">
+                <div class="bg-white/50 p-8 rounded-xl shadow-lg">
+                    <h2 class="text-4xl font-bold text-center mb-6 header">Season Results</h2>
+                    <div id="winner-display" class="text-center mb-8"></div>
+                    <div id="track-record-container" class="overflow-x-auto shadow-md rounded-lg">
                         </div>
                     <div id="stats-container" class="mt-6">
                        </div>
-                    <div class="mt-8 text-center">
-                        <button id="simulate-again-btn" class="btn-primary text-white font-bold py-2 px-6 rounded-full mr-4">Simulate Again</button>
-                        <button id="new-season-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-full">New Season</button>
+                    <div class="mt-10 text-center space-x-4">
+                        <button id="simulate-again-btn" class="btn-primary font-bold py-3 px-8 rounded-full">Simulate Again</button>
+                        <button id="new-season-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-full">New Season</button>
                     </div>
                 </div>
             </div>
@@ -196,11 +223,11 @@
     </div>
 
     <div id="message-modal" class="fixed inset-0 z-50 hidden items-center justify-center modal">
-        <div class="modal-content rounded-lg shadow-xl p-6 w-11/12 md:w-1/2 lg:w-1/3">
-            <h3 id="modal-title" class="text-xl font-bold mb-4"></h3>
-            <p id="modal-message"></p>
-            <div class="text-right mt-6">
-                <button id="modal-close-btn" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-full">Close</button>
+        <div class="modal-content rounded-lg shadow-xl p-8 w-11/12 md:w-1/2 lg:w-1/3 text-center">
+            <h3 id="modal-title" class="text-2xl font-bold mb-4 text-pink-500"></h3>
+            <p id="modal-message" class="text-lg"></p>
+            <div class="text-center mt-8">
+                <button id="modal-close-btn" class="btn-primary font-bold py-2 px-8 rounded-full">Close</button>
             </div>
         </div>
     </div>
@@ -927,39 +954,31 @@
             
             state.currentCast.forEach(queen => queen.performanceScore = queen.getPerformance(results.currentChallenge));
             
-            state.currentCast.sort((a, b) => b.performanceScore - a.performanceScore);
+            const queensByPerformance = [...state.currentCast].sort((a, b) => b.performanceScore - a.performanceScore);
             
-            // Separate immune queens
-            const immuneQueens = state.currentCast.filter(q => q.isImmune);
-            const nonImmuneQueens = state.currentCast.filter(q => !q.isImmune);
+            const immuneQueens = queensByPerformance.filter(q => q.isImmune);
+            const nonImmuneQueens = queensByPerformance.filter(q => !q.isImmune);
 
-            // Determine tops from non-immune queens
-            const tops = nonImmuneQueens.slice(0, 3);
-            const winner = tops[0];
-            const highs = tops.slice(1);
+            const winner = nonImmuneQueens[0];
+            const highs = [nonImmuneQueens[1], nonImmuneQueens[2]];
             
-            // Determine bottoms from the rest of the non-immune queens
-            const remainingQueens = nonImmuneQueens.slice(3);
-            const bottoms = remainingQueens.slice(-3);
-            const lipSyncers = bottoms.slice(0, 2);
-            const lowQueen = bottoms.length > 2 ? bottoms[2] : null;
-            
-            const safes = remainingQueens.slice(0, -3);
-            
-            results.tops = tops;
+            const bottoms = nonImmuneQueens.slice(-2);
+            const lowQueen = nonImmuneQueens.slice(-3, -2)[0];
+
+            const safeQueens = nonImmuneQueens.slice(3, -3);
+
             results.winner = winner;
             results.highs = highs;
             results.low = lowQueen;
-            results.bottoms = bottoms;
-            results.lipSyncers = lipSyncers;
-            
-            if (lipSyncers.length < 2) {
+            results.lipSyncers = bottoms;
+
+            if (results.lipSyncers.length < 2) {
                 results.lipSyncWinner = null;
                 results.eliminatedQueen = null;
                 results.savedByChocolate = false;
             } else {
-                results.lipSyncWinner = lipSyncers[0].getLipsyncPerformance() > lipSyncers[1].getLipsyncPerformance() ? lipSyncers[0] : lipSyncers[1];
-                results.eliminatedQueen = lipSyncers.find(q => q !== results.lipSyncWinner);
+                results.lipSyncWinner = results.lipSyncers[0].getLipsyncPerformance() > results.lipSyncers[1].getLipsyncPerformance() ? results.lipSyncers[0] : results.lipSyncers[1];
+                results.eliminatedQueen = results.lipSyncers.find(q => q !== results.lipSyncWinner);
                 
                 results.savedByChocolate = false;
                 if (state.specialTwists.chocolateBar && !state.specialTwists.chocolateBarUsed && results.eliminatedQueen.hasGoldenChocolateBar) {
@@ -970,8 +989,8 @@
                      state.currentCast = state.currentCast.filter(q => q.name !== results.eliminatedQueen.name);
                 }
             }
-
-            updateRegularTrackRecords(winner, highs, safes, lowQueen, lipSyncers, results.eliminatedQueen, results.savedByChocolate, immuneQueens);
+            
+            updateRegularTrackRecords(winner, highs, [...safeQueens, ...immuneQueens], lowQueen, bottoms, results.eliminatedQueen, results.savedByChocolate);
             if (state.specialTwists.immunity && winner) {
                 winner.isImmune = true;
                 winner.newlyImmune = true; 
@@ -1112,7 +1131,7 @@
                 <p class="text-3xl font-bold mt-4">${winner.name}!</p>`;
 
             if (qosdadhWinner) {
-                winnerHtml += `<p class="text-xl text-gray-300 mt-6">and the Queen of She Done Already Done Had Herses is...</p>
+                winnerHtml += `<p class="text-xl text-gray-500 mt-6">and the Queen of She Done Already Done Had Herses is...</p>
                                <p class="text-2xl font-semibold mt-2">${qosdadhWinner.name}!</p>`;
             }
             winnerHtml += `</div>`;
@@ -1149,13 +1168,19 @@
             });
         }
 
-        function updateRegularTrackRecords(winner, highs, safes, low, bottoms, eliminated, savedByChocolate, immuneQueens) {
+        function updateRegularTrackRecords(winner, highs, safes, low, bottoms, eliminated, savedByChocolate) {
             if (winner) {
                 winner.addToTrackRecord("WIN");
                 winner.wins++;
             }
             highs.forEach(q => q.addToTrackRecord("HIGH"));
-            safes.forEach(q => q.addToTrackRecord("SAFE"));
+            safes.forEach(q => {
+                 if (q.isImmune) {
+                    q.addToTrackRecord("SAFE (Immune)");
+                } else {
+                    q.addToTrackRecord("SAFE");
+                }
+            });
             if (low) low.addToTrackRecord("LOW");
             
             bottoms.forEach(q => {
@@ -1166,7 +1191,6 @@
                     q.bottoms++;
                 }
             });
-            immuneQueens.forEach(q => q.addToTrackRecord("SAFE (Immune)"));
         }
 
         function updateTrackRecords(tops, bottoms, lipSyncers, eliminated, savedByChocolate, isAllStars = false, lsLoser = null) {
@@ -1203,53 +1227,53 @@
         
         function displayEpisodeResults(results) {
             let content = `<h2 class="text-3xl font-bold mb-4 header">Episode ${state.episodeCount}</h2>`;
-            content += `<p class="mb-2"><strong class="text-pink-400">Mini Challenge Winner:</strong> ${results.miniChallengeWinner.name}</p>`;
-            content += `<p class="mb-4"><strong class="text-pink-400">Maxi Challenge:</strong> A fierce ${results.currentChallenge} challenge!</p>`;
+            content += `<p class="mb-2 text-lg"><strong class="text-pink-500">Mini Challenge Winner:</strong> ${results.miniChallengeWinner.name}</p>`;
+            content += `<p class="mb-4 text-lg"><strong class="text-pink-500">Maxi Challenge:</strong> A fierce ${results.currentChallenge} challenge!</p>`;
             
-            content += `<h3 class="text-xl font-semibold mt-4 mb-2">Critiques</h3>`;
+            content += `<h3 class="text-2xl font-semibold mt-6 mb-3 text-gray-700">Critiques</h3>`;
              if (state.seasonFormat.includes('all-stars') && state.seasonFormat !== 'all-winners') {
-                content += `<p><strong class="text-blue-400">Top 2:</strong> ${results.tops.map(q => q.name).join(' & ')}</p>`;
-                content += `<p><strong class="text-red-400">Bottoms:</strong> ${results.bottoms.map(q => q.name).join(', ')}</p>`;
-                content += `<h3 class="text-xl font-semibold mt-4 mb-2">Lip Sync For Your Legacy</h3>`;
-                content += `<p>${results.tops[0].name} vs. ${results.tops[1].name}</p>`;
-                content += `<p class="mt-2"><strong class="text-yellow-400">${results.lipSyncWinner.name}</strong> is the winner of the lip sync!</p>`;
+                content += `<p class="text-lg"><strong class="text-blue-500">Top 2:</strong> ${results.tops.map(q => q.name).join(' & ')}</p>`;
+                content += `<p class="text-lg"><strong class="text-red-500">Bottoms:</strong> ${results.bottoms.map(q => q.name).join(', ')}</p>`;
+                content += `<h3 class="text-2xl font-semibold mt-6 mb-3 text-gray-700">Lip Sync For Your Legacy</h3>`;
+                content += `<p class="text-lg">${results.tops[0].name} vs. ${results.tops[1].name}</p>`;
+                content += `<p class="mt-2 text-lg"><strong class="text-yellow-500">${results.lipSyncWinner.name}</strong> is the winner of the lip sync!</p>`;
             } else if(state.seasonFormat === 'all-winners') {
-                content += `<p><strong class="text-blue-400">Top Queens:</strong> ${[...results.tops, ...results.highs].map(q => q.name).join(', ')}</p>`;
-                content += `<p class="text-yellow-300 mt-2">⭐ <strong >Star Winners:</strong> ${results.starWinners.map(q => q.name).join(' & ')} ⭐</p>`;
-                content += `<h3 class="text-xl font-semibold mt-4 mb-2">Lip Sync For The Win</h3>`;
-                content += `<p>${results.tops[0].name} vs. ${results.tops[1].name}</p>`;
-                content += `<p class="mt-2"><strong class="text-yellow-400">${results.lipSyncWinner.name}</strong> is the winner of the lip sync!</p>`;
+                content += `<p class="text-lg"><strong class="text-blue-500">Top Queens:</strong> ${[...results.tops, ...results.highs].map(q => q.name).join(', ')}</p>`;
+                content += `<p class="text-yellow-400 mt-2 text-lg">⭐ <strong >Star Winners:</strong> ${results.starWinners.map(q => q.name).join(' & ')} ⭐</p>`;
+                content += `<h3 class="text-2xl font-semibold mt-6 mb-3 text-gray-700">Lip Sync For The Win</h3>`;
+                content += `<p class="text-lg">${results.tops[0].name} vs. ${results.tops[1].name}</p>`;
+                content += `<p class="mt-2 text-lg"><strong class="text-yellow-500">${results.lipSyncWinner.name}</strong> is the winner of the lip sync!</p>`;
                 if (results.blockedQueen) {
-                    content += `<p class="mt-2 text-red-500"><strong>${results.lipSyncWinner.name}</strong> has blocked <strong>${results.blockedQueen.name}</strong> from receiving a star next week.</p>`;
+                    content += `<p class="mt-2 text-red-600"><strong>${results.lipSyncWinner.name}</strong> has blocked <strong>${results.blockedQueen.name}</strong> from receiving a star next week.</p>`;
                 }
                 if (results.giftedQueen) {
-                    content += `<p class="mt-2 text-green-400"><strong>${results.giftingQueen.name}</strong> has gifted a Legendary Legend Star to <strong>${results.giftedQueen.name}</strong>!</p>`
+                    content += `<p class="mt-2 text-green-500"><strong>${results.giftingQueen.name}</strong> has gifted a Legendary Legend Star to <strong>${results.giftedQueen.name}</strong>!</p>`
                 }
             }
             else {
-                if (results.winner) content += `<p><strong class="text-blue-400">Winner:</strong> ${results.winner.name}</p>`;
-                if (results.highs && results.highs.length > 0) content += `<p><strong class="text-blue-300">High:</strong> ${results.highs.map(q => q.name).join(', ')}</p>`;
+                if(results.winner) content += `<p class="text-lg"><strong class="text-blue-500">Winner:</strong> ${results.winner.name}</p>`;
+                if(results.highs.length) content += `<p class="text-lg"><strong class="text-blue-400">High:</strong> ${results.highs.map(q => q.name).join(', ')}</p>`;
                 if (results.low) {
-                    content += `<p><strong class="text-yellow-400">Low:</strong> ${results.low.name}</p>`;
+                    content += `<p class="text-lg"><strong class="text-yellow-500">Low:</strong> ${results.low.name}</p>`;
                 }
                 if (results.lipSyncers && results.lipSyncers.length > 0) {
-                    content += `<p><strong class="text-red-400">Bottom 2:</strong> ${results.lipSyncers.map(q => q.name).join(' & ')}</p>`;
-                    content += `<h3 class="text-xl font-semibold mt-4 mb-2">Lip Sync For Your Life</h3>`;
+                    content += `<p class="text-lg"><strong class="text-red-500">Bottom 2:</strong> ${results.lipSyncers.map(q => q.name).join(' & ')}</p>`;
+                    content += `<h3 class="text-2xl font-semibold mt-6 mb-3 text-gray-700">Lip Sync For Your Life</h3>`;
                 }
             }
             
             if (results.eliminatedQueen) {
                 if (!state.seasonFormat.includes('all-stars') && state.seasonFormat !== 'all-winners') {
-                    content += `<p>${results.lipSyncers[0].name} vs. ${results.lipSyncers[1].name}</p>`;
-                    content += `<p class="mt-2"><strong class="text-green-400">${results.lipSyncWinner.name}</strong>, shantay you stay.</p>`;
+                    content += `<p class="text-lg">${results.lipSyncers[0].name} vs. ${results.lipSyncers[1].name}</p>`;
+                    content += `<p class="mt-2 text-lg"><strong class="text-green-500">${results.lipSyncWinner.name}</strong>, shantay you stay.</p>`;
                 }
                 if (results.savedByChocolate) {
-                    content += `<p class="mt-4 text-yellow-300 font-bold">BUT WAIT! ${results.eliminatedQueen.name} reveals the Golden Chocolate Bar! She is saved!</p>`;
+                    content += `<p class="mt-4 text-yellow-500 font-bold">BUT WAIT! ${results.eliminatedQueen.name} reveals the Golden Chocolate Bar! She is saved!</p>`;
                 } else {
-                    content += `<p class="mt-1"><strong class="text-red-500">${results.eliminatedQueen.name}</strong>, sashay away.</p>`;
+                    content += `<p class="mt-1 text-lg"><strong class="text-red-600">${results.eliminatedQueen.name}</strong>, sashay away.</p>`;
                 }
             } else if (state.seasonFormat === 'regular' && (!results.lipSyncers || results.lipSyncers.length < 2)) {
-                 content += `<p class="mt-2 text-green-400 font-bold">Due to immunity, no one is going home this week!</p>`;
+                 content += `<p class="mt-2 text-green-500 font-bold">Due to immunity, no one is going home this week!</p>`;
             }
             
             episodeContent.innerHTML = content;
@@ -1297,10 +1321,10 @@
             
             const winner = state.currentCast[0];
             winnerDisplay.innerHTML = `<div class="text-center">
-                <h3 class="text-4xl font-bold text-yellow-400 mb-4">And the winner is...</h3>
-                <img src="${winner.image}" class="w-40 h-40 rounded-full mx-auto border-4 border-yellow-400 shadow-lg">
-                <p class="text-3xl font-bold mt-4">${winner.name}!</p>
-                <p class="text-xl text-gray-400 mt-2">Condragulations, you're a winner, baby!</p>
+                <h3 class="text-5xl font-bold text-yellow-400 mb-4" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">And the winner is...</h3>
+                <img src="${winner.image}" class="w-48 h-48 rounded-full mx-auto border-4 border-yellow-400 shadow-2xl">
+                <p class="text-4xl font-bold mt-4">${winner.name}!</p>
+                <p class="text-xl text-gray-500 mt-2">Condragulations, you're a winner, baby!</p>
             </div>`;
             
             renderTrackRecord();
@@ -1315,19 +1339,19 @@
                 }
             }
             
-            let tableHTML = `<table class="track-record-table"><thead><tr><th>Queen</th>`;
+            let tableHTML = `<table class="track-record-table rounded-lg"><thead><tr><th class="rounded-tl-lg">Queen</th>`;
             if (isAllWinners) {
                 tableHTML += `<th>Stars</th>`;
             }
             for(let i=1; i<= state.episodeCount; i++) { 
                 const challengeName = state.challengeLog[i - 1] || '';
-                const formattedChallenge = challengeName.charAt(0).toUpperCase() + challengeName.slice(1);
-                tableHTML += `<th><div class="font-semibold">Ep ${i}</div><div class="text-xs font-normal normal-case">${formattedChallenge}</div></th>`;
+                const formattedChallenge = challengeName.replace(/ Challenge/g, '');
+                tableHTML += `<th class="${i === state.episodeCount ? 'rounded-tr-lg' : ''}"><div class="font-semibold">Ep ${i}</div><div class="text-xs font-normal normal-case">${formattedChallenge}</div></th>`;
             }
             tableHTML += `</tr></thead><tbody>`;
 
-            finalCast.forEach(queen => {
-                tableHTML += `<tr><td class="font-semibold text-left p-2">${queen.name}</td>`;
+            finalCast.forEach((queen, index) => {
+                tableHTML += `<tr><td class="font-semibold text-left p-3 ${index === finalCast.length - 1 ? 'rounded-bl-lg' : ''}">${queen.name}</td>`;
                  if (isAllWinners) {
                     tableHTML += `<td>${queen.stars} ⭐</td>`;
                 }
@@ -1340,7 +1364,7 @@
                     }
                      if(placement === "STAR (GIFT)") {
                         placementClass = "tr-special";
-                        placementText = "STAR (GIFT)";
+                        placementText = "STAR";
                     }
                     tableHTML += `<td class="${placementClass}">${placementText}</td>`;
                 });
@@ -1430,7 +1454,7 @@
 
             for (const seasonName in seasons) {
                 const btn = document.createElement('button');
-                btn.className = 'btn-secondary text-white font-bold py-2 px-4 rounded-full text-sm';
+                btn.className = 'btn-secondary font-bold py-2 px-4 rounded-lg text-sm transition-transform transform hover:scale-105';
                 btn.textContent = seasonName;
                 btn.addEventListener('click', () => {
                     originalCastData = ALL_QUEENS_DATA.filter(q => seasons[seasonName].includes(q.name));
@@ -1446,9 +1470,9 @@
             queens.forEach(qData => {
                 const isSelected = originalCastData.some(q => q.name === qData.name);
                 const card = document.createElement('div');
-                card.className = `queen-card rounded-lg p-2 text-center shadow-lg transition-all duration-200 ${isSelected ? 'bg-pink-600' : 'bg-gray-700'}`;
+                card.className = `queen-card bg-white p-2 text-center shadow-md transition-all duration-200 ${isSelected ? 'selected' : ''}`;
                 card.dataset.queenName = qData.name;
-                card.innerHTML = `<img src="${qData.image}" class="w-16 h-16 rounded-full mx-auto mb-2"><p class="text-xs font-medium">${qData.name}</p>`;
+                card.innerHTML = `<img src="${qData.image}" class="w-20 h-20 rounded-full mx-auto mb-2 border-2 ${isSelected ? 'border-pink-400' : 'border-gray-200'}"><p class="text-xs font-medium text-gray-700">${qData.name}</p>`;
                 card.addEventListener('click', () => {
                     toggleQueenSelection(qData);
                     renderSearchResults(queens); // Re-render to update the visual state
@@ -1487,9 +1511,9 @@
             currentCastDisplay.innerHTML = '';
             originalCastData.forEach(qData => {
                 const card = document.createElement('div');
-                card.className = 'queen-card bg-pink-900/50 rounded-lg p-1 text-center shadow-lg';
+                card.className = 'bg-pink-100 rounded-lg p-2 text-center shadow-inner';
                 card.dataset.queenName = qData.name;
-                card.innerHTML = `<p class="text-xs font-medium">${qData.name}</p>`;
+                card.innerHTML = `<p class="text-xs font-medium text-pink-700 truncate">${qData.name}</p>`;
                 card.addEventListener('click', () => {
                     toggleQueenSelection(qData);
                     renderSearchResults(ALL_QUEENS_DATA); // Update search to reflect deselection
@@ -1525,6 +1549,7 @@
             currentCastDisplay.innerHTML = '';
             selectedQueenCountEl.textContent = 0;
             castSizeInput.value = 0;
+            renderSearchResults(ALL_QUEENS_DATA);
         }
         
         function showMessage(title, message) {
