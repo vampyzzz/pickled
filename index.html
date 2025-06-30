@@ -72,15 +72,21 @@
             overflow: hidden;
             width: 100%;
         }
-        .track-record-table th, .track-record-table td {
-            border: 1px solid #e2e8f0;
+        .track-record-table th {
             padding: 12px;
             text-align: center;
-            vertical-align: middle; /* Changed from top */
-        }
-        .track-record-table th {
             background-color: rgba(238, 156, 167, 0.2);
             color: #a64ca6;
+            border: 1px solid #e2e8f0;
+        }
+        .track-record-table td {
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            width: 60px; /* Or your desired size */
+            height: 60px; /* Same as width */
+            padding: 0;
+            vertical-align: middle;
+            font-size: 14px; /* Adjust as needed */
         }
         /* Custom scrollbar */
         ::-webkit-scrollbar {
@@ -162,7 +168,7 @@
                                 <span class="ml-2 text-md text-gray-700">Golden Chocolate Bar</span>
                             </label>
                             <label class="flex items-center">
-                                <input type="checkbox" id="riggory" class="w-5 h-5 text-pink-500 bg-gray-100 border-gray-300 rounded focus:ring-pink-400">
+                                <input type="checkbox" id="riggory" class="w-5 h-5 text-pink-500 bg-gray-100 border-gray-300 rounded focus:ring-pink-400" checked>
                                 <span class="ml-2 text-md text-gray-700">Producer Riggory</span>
                             </label>
                         </div>
@@ -887,9 +893,12 @@
                     case 'Talent Show': baseScore = (this.stats[randomStat1] + this.stats[randomStat2] + this.stats.lipsync) / 3; break;
                     default: baseScore = (this.stats[randomStat1] + this.stats[randomStat2]) / 2;
                 }
-                const randomFactor = (Math.random() - 0.5) * 5;
+                const chaosFactor = state.specialTwists.riggory ? 7 : 5;
+                const randomFactor = (Math.random() - 0.5) * chaosFactor;
+                const statMultiplier = state.specialTwists.riggory ? 1.1 : 1.0;
+                
                 let storylineBoost = (this.wins === 0 && state.episodeCount > 3) ? (Math.random() * 1.5) : 0;
-                return baseScore + randomFactor + (state.specialTwists.riggory ? this.favoritism : 0) + storylineBoost;
+                return (baseScore * statMultiplier) + randomFactor + storylineBoost;
             }
 
             getLipsyncPerformance() {
@@ -944,7 +953,7 @@
             results.miniChallengeWinner.favoritism += 0.5;
 
             let availableChallenges = ALL_CHALLENGES.filter(c => !state.usedChallenges.includes(c));
-            if (availableChallenges.length === 0) { // Reset if all challenges used
+            if (availableChallenges.length === 0) {
                 state.usedChallenges = [];
                 availableChallenges = [...ALL_CHALLENGES];
             }
@@ -1005,7 +1014,7 @@
             results.miniChallengeWinner.favoritism += 0.5;
 
             let availableChallenges = ALL_CHALLENGES.filter(c => !state.usedChallenges.includes(c) || state.usedChallenges.filter(used => used === c).length < 2);
-            if (availableChallenges.length === 0) { // Reset if all challenges used twice
+            if (availableChallenges.length === 0) {
                 state.usedChallenges = [];
                 availableChallenges = [...ALL_CHALLENGES];
             }
@@ -1366,7 +1375,7 @@
                         placementClass = "tr-special";
                         placementText = "STAR";
                     }
-                    tableHTML += `<td class="${placementClass}">${placementText}</td>`;
+                    tableHTML += `<td class="${placementClass}"><div class="flex items-center justify-center h-full">${placementText}</div></td>`;
                 });
                 tableHTML += `</tr>`;
             });
