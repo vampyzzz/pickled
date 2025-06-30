@@ -931,29 +931,30 @@
             if (state.isFinale) return;
             state.episodeCount++;
             const finaleFormat = document.getElementById('finale').value;
-
-            if (state.seasonFormat === 'all-winners' && state.episodeCount > 7) { 
+        
+            if (state.seasonFormat === 'all-winners' && state.episodeCount > 7) {
                 showAllWinnersFinale();
                 return;
             }
-
+        
             if (state.seasonFormat !== 'all-winners') {
-                if ((finaleFormat === 'top4' && state.currentCast.length <= 4) || (finaleFormat === 'top3' && state.currentCast.length <= 3)) {
+                const finaleSize = finaleFormat === 'top4' ? 4 : 3;
+                if (state.currentCast.length <= finaleSize) {
                     runFinaleEpisode();
                     return;
                 }
             }
-            
+        
             state.currentCast.forEach(q => {
-                 if (!q.newlyImmune) q.isImmune = false;
-                 if (!q.newlyBlocked) q.isBlocked = false;
-                 q.newlyImmune = false;
-                 q.newlyBlocked = false;
-                 q.wasImmuneAndSaved = false;
-                 q.recievedGiftedStar = false;
+                if (!q.newlyImmune) q.isImmune = false;
+                if (!q.newlyBlocked) q.isBlocked = false;
+                q.newlyImmune = false;
+                q.newlyBlocked = false;
+                q.wasImmuneAndSaved = false;
+                q.recievedGiftedStar = false;
             });
-            
-            switch(document.getElementById('format').value) {
+        
+            switch (document.getElementById('format').value) {
                 case 'all-stars':
                 case 'lipsync-assassin':
                     runAllStarsEpisode();
@@ -1316,56 +1317,78 @@
             nextEpisodeBtn.classList.add('hidden');
             simulationScreen.classList.add('hidden');
             resultsScreen.classList.remove('hidden');
-
+        
             state.challengeLog.push('Finale');
             const finaleFormat = document.getElementById('finale').value;
-
+        
+            // TOP 4 FINALE
             if (finaleFormat === 'top4' && state.currentCast.length === 4) {
-                // "Top 4" finale logic
+                // Each finalist creates an original song and performs it
                 state.currentCast.forEach(queen => queen.performanceScore = queen.getPerformance('Singing Challenge'));
-                state.currentCast.sort((a, b) => (b.performanceScore + b.ppe) - (a.performanceScore + a.ppe));
+        
+                // Sort based on season performance AND finale performance
+                state.currentCast.sort((a, b) => (b.performanceScore + (b.ppe * 2)) - (a.performanceScore + (a.ppe * 2)));
+        
+                // Top two selected to lip sync
                 const lipSyncers = state.currentCast.slice(0, 2);
-                const finalists = state.currentCast.slice(2);
-
+                const eliminatedFinalists = state.currentCast.slice(2);
+        
                 const winner = lipSyncers[0].getLipsyncPerformance() > lipSyncers[1].getLipsyncPerformance() ? lipSyncers[0] : lipSyncers[1];
                 const runnerUp = lipSyncers.find(q => q.name !== winner.name);
-
+        
                 winner.addToTrackRecord("WINNER");
                 runnerUp.addToTrackRecord("RUNNER-UP");
-                finalists.forEach(q => q.addToTrackRecord("SEMI-FINALS"));
-
-                state.eliminatedCast.push(runnerUp, ...finalists);
+                eliminatedFinalists.forEach(q => q.addToTrackRecord("SEMI-FINALS"));
+        
+                state.eliminatedCast.push(runnerUp, ...eliminatedFinalists);
                 state.currentCast = [winner];
-
+        
+            // TOP 3 FINALE
             } else if (finaleFormat === 'top3' && state.currentCast.length === 3) {
-                // "Top 3" finale logic
+                // Final 3 participate in a music video challenge
                 state.currentCast.forEach(queen => queen.performanceScore = queen.getPerformance('Music Video Challenge'));
-                state.currentCast.sort((a, b) => (b.performanceScore + b.ppe) - (a.performanceScore + a.ppe));
+                
+                // Sort based on season performance AND finale performance
+                state.currentCast.sort((a, b) => (b.performanceScore + (b.ppe * 2)) - (a.performanceScore + (a.ppe * 2)));
+        
+                // One queen is eliminated
                 const eliminatedQueen = state.currentCast.pop();
-                const lipSyncers = state.currentCast;
-
+                const lipSyncers = state.currentCast; // The remaining two
+        
                 const winner = lipSyncers[0].getLipsyncPerformance() > lipSyncers[1].getLipsyncPerformance() ? lipSyncers[0] : lipSyncers[1];
                 const runnerUp = lipSyncers.find(q => q.name !== winner.name);
-
+        
                 winner.addToTrackRecord("WINNER");
                 runnerUp.addToTrackRecord("RUNNER-UP");
                 eliminatedQueen.addToTrackRecord("ELIM");
-
+        
                 state.eliminatedCast.push(runnerUp, eliminatedQueen);
                 state.currentCast = [winner];
             } else {
-                // Generic fallback for any other number of finalists
-                if (state.currentCast.length >= 2) {
-                    state.currentCast.sort((a,b) => b.ppe - a.ppe);
-                    const winner = state.currentCast[0];
-                    const runnerUps = state.currentCast.slice(1);
+                 // Fallback for any other number of finalists
+                if (state.currentCast.length === 3 && finaleFormat === 'top4') {
+                    // If user wanted a top 4 but only 3 are left, run top 3 logic
+                    state.currentCast.forEach(queen => queen.performanceScore = queen.getPerformance('Music Video Challenge'));
+                    state.currentCast.sort((a, b) => (b.performanceScore + (b.ppe * 2)) - (a.performanceScore + (a.ppe * 2)));
+                    const eliminatedQueen = state.currentCast.pop();
+                    const lipSyncers = state.currentCast;
+                    const winner = lipSyncers[0].getLipsyncPerformance() > lipSyncers[1].getLipsyncPerformance() ? lipSyncers[0] : lipSyncers[1];
+                    const runnerUp = lipSyncers.find(q => q.name !== winner.name);
                     winner.addToTrackRecord("WINNER");
-                    runnerUps.forEach(r => r.addToTrackRecord("RUNNER-UP"));
-                    state.eliminatedCast.push(...runnerUps);
+                    runnerUp.addToTrackRecord("RUNNER-UP");
+                    eliminatedQueen.addToTrackRecord("ELIM");
+                    state.eliminatedCast.push(runnerUp, eliminatedQueen);
                     state.currentCast = [winner];
-                } else if (state.currentCast.length === 1) {
-                    // Already a winner
-                    state.currentCast[0].addToTrackRecord("WINNER");
+
+                } else if (state.currentCast.length >= 2) {
+                    // Final lip-sync for the crown
+                    state.currentCast.sort((a,b) => b.ppe - a.ppe);
+                    const winner = state.currentCast[0].getLipsyncPerformance() > state.currentCast[1].getLipsyncPerformance() ? state.currentCast[0] : state.currentCast[1];
+                    const runnerUp = state.currentCast.find(q => q.name !== winner.name);
+                    winner.addToTrackRecord("WINNER");
+                    if(runnerUp) runnerUp.addToTrackRecord("RUNNER-UP");
+                     state.eliminatedCast.push(runnerUp);
+                    state.currentCast = [winner];
                 }
             }
             
