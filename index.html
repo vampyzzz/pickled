@@ -126,6 +126,67 @@
             border: 1px solid #d1d5db !important;
             color: #374151 !important;
         }
+
+        .tabs-container {
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .tab-box {
+            display: flex;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .tab-box::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, and Opera */
+        }
+
+        .tab-btn {
+            list-style: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 9999px;
+            margin: 0 5px;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            background-color: #d474a0;
+            color: white;
+        }
+
+        .content-tab-box {
+            margin-top: 20px;
+        }
+
+        .content-tab {
+            display: none;
+        }
+
+        .content-tab.active {
+            display: block;
+        }
+        .content-seasons {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .content-season {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .content-season-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body class="min-h-screen p-4">
@@ -176,16 +237,8 @@
                         <h3 class="text-2xl font-semibold mb-4 text-gray-700">Your Cast (<span id="selected-queen-count">0</span>)</h3>
                         <div id="current-cast-display" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 min-h-[60px] p-3 bg-gray-100 rounded-lg">
                            </div>
-                        <div class="flex justify-center space-x-4 my-6">
-                            <button id="predefined-tab-btn" class="tab-button btn-secondary text-gray-700 font-bold py-2 px-6 rounded-full active">Predefined Casts</button>
-                            <button id="search-tab-btn" class="tab-button btn-secondary text-gray-700 font-bold py-2 px-6 rounded-full">Search Queens</button>
-                        </div>
-
-                        <div id="predefined-casts-tab">
-                             <h4 class="text-lg font-medium text-gray-600 mb-3">Select a Season</h4>
-                             <div id="predefined-casts-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-80 overflow-y-auto p-3 bg-gray-100/70 rounded-lg">
-                                </div>
-                        </div>
+                        <div id="predefined-casts-container">
+                            </div>
 
                         <div id="search-queens-tab" class="hidden">
                             <input type="search" id="queen-search-input" class="w-full rounded-lg p-3 mb-4 text-lg" placeholder="Search for a queen...">
@@ -834,12 +887,6 @@
         const selectedQueenCountEl = document.getElementById('selected-queen-count');
         const addRandomBtn = document.getElementById('add-random-queen-btn');
         const predefinedCastsContainer = document.getElementById('predefined-casts-container');
-        const searchResultsContainer = document.getElementById('search-results-container');
-        const currentCastDisplay = document.getElementById('current-cast-display');
-        const queenSearchInput = document.getElementById('queen-search-input');
-        const predefinedTabBtn = document.getElementById('predefined-tab-btn');
-        const searchTabBtn = document.getElementById('search-tab-btn');
-        const predefinedCastsTab = document.getElementById('predefined-casts-tab');
         const searchQueensTab = document.getElementById('search-queens-tab');
 
         // --- CLASSES ---
@@ -892,11 +939,11 @@
                     case 'Talent Show': baseScore = (this.stats[randomStat1] + this.stats[randomStat2] + this.stats.lipsync) / 3; break;
                     default: baseScore = (this.stats[randomStat1] + this.stats[randomStat2]) / 2;
                 }
-                const chaosFactor = state.specialTwists.riggory ? 7 : 5;
+                const chaosFactor = state.specialTwists.riggory ? 10 : 5;
                 const randomFactor = (Math.random() - 0.5) * chaosFactor;
-                const statMultiplier = state.specialTwists.riggory ? 1.1 : 1.0;
+                const statMultiplier = state.specialTwists.riggory ? 1.2 : 1.0;
                 
-                let storylineBoost = (this.wins === 0 && state.episodeCount > 3) ? (Math.random() * 1.5) : 0;
+                let storylineBoost = (this.wins === 0 && state.episodeCount > 3) ? (Math.random() * 2.5) : 0;
                 return (baseScore * statMultiplier) + randomFactor + storylineBoost;
             }
 
@@ -1416,136 +1463,183 @@
         
         // --- EVENT HANDLERS & INITIALIZATION ---
         function initializeApp() {
-            populatePredefinedCasts();
+            loadPredefinedCasts();
             // Event Listeners for tabs and buttons are here
-            predefinedTabBtn.addEventListener('click', () => {
-                predefinedCastsTab.classList.remove('hidden');
-                searchQueensTab.classList.add('hidden');
-                predefinedTabBtn.classList.add('active');
-                searchTabBtn.classList.remove('active');
-            });
-
-            searchTabBtn.addEventListener('click', () => {
-                predefinedCastsTab.classList.add('hidden');
-                searchQueensTab.classList.remove('hidden');
-                predefinedTabBtn.classList.remove('active');
-                searchTabBtn.classList.add('active');
-                renderSearchResults(ALL_QUEENS_DATA);
-            });
-
             startBtn.addEventListener('click', startSimulation);
             newSeasonBtn.addEventListener('click', resetToSetup);
             nextEpisodeBtn.addEventListener('click', runNextEpisode);
             simulateAgainBtn.addEventListener('click', startSimulation); 
-            addRandomBtn.addEventListener('click', addRandomQueen);
-
-            queenSearchInput.addEventListener('input', (e) => {
-                const query = e.target.value.toLowerCase();
-                const filteredQueens = ALL_QUEENS_DATA.filter(q => q.name.toLowerCase().includes(query));
-                renderSearchResults(filteredQueens);
-            });
         }
 
-        function populatePredefinedCasts() {
-            const seasons = {
-                "US S1": ["Akashia", "BeBe Zahara Benet", "Jade Sotomayor", "Nina Flowers", "Ongina", "Rebecca Glasscock", "Shannel", "Tammie Brown", "Victoria 'Porkchop' Parker"],
-                "US S2": ["Jessica Wild", "Jujubee", "Morgan McMichaels", "Mystique Summers", "Nicole Paige Brooks", "Pandora Boxx", "Sahara Davenport", "Shangela", "Kylie Sonique Love", "Tatianna", "King Tyra"],
-                "US S3": ["Alexis Mateo", "Carmen Carrera", "Delta Work", "India Ferrah", "Manila Luzon", "Mariah Paris Balenciaga", "Mimi Imfurst", "Phoenix", "Raja", "Stacy Layne Matthews", "Venus D-Lite", "Yara Sofia"],
-                "US S4": ["Alisa Summers", "Chad Michaels", "Dida Ritz", "Jiggly Caliente", "Kenya Olivera", "Lashauwn Beyond", "Latrice Royale", "Madame LaQueer", "Milan", "Jaremi Carey", "The Princess", "Willam"],
-                "US S5": ["Alaska", "Alyssa Edwards", "Coco Montrese", "Detox", "Honey Mahogany", "Ivy Winters", "Jade Jolie", "Jinkx Monsoon", "Lineysha Sparx", "Monica Beverly Hillz", "Penny Tration", "Roxxxy Andrews", "Serena ChaCha", "Vivienne Pinay"],
-                "US S6": ["Adore Delano", "April Carrión", "BenDeLaCreme", "Bianca Del Rio", "Courtney Act", "Darienne Lake", "Gia Gunn", "Joslyn Fox", "Kelly Mantle", "Laganja Estranja", "Magnolia Crawford", "Milk", "Trinity K. Bonet", "Vivacious"],
-                "US S7": ["Ginger Minj", "Jaidynn Diore Fierce", "Jasmine Masters", "Kandy Ho", "Katya", "Kennedy Davenport", "Max", "Miss Fame", "Mrs. Kasha Davis", "Pearl", "Frisbee Jenkins", "Tempest DuJour", "Trixie Mattel", "Violet Chachki"],
-                "US S8": ["Acid Betty", "Bob The Drag Queen", "Chi Chi DeVayne", "Cynthia Lee Fontaine", "Dax ExclamationPoint", "Derrick Barry", "Kim Chi", "Laila McQueen", "Naomi Smalls", "Naysha Lopez", "Robbie Turner", "Thorgy Thor"],
-                "US S9": ["Aja", "Alexis Michelle", "Eureka!", "Farrah Moan", "Jaymes Mansfield", "Kimora Blac", "Nina Bo'nina Brown", "Peppermint", "Sasha Velour", "Shea Couleé", "Trinity The Tuck", "Valentina"],
-                "US S10": ["Aquaria", "Asia O'Hara", "Blair St. Clair", "Dusty Ray Bottoms", "Kalorie K. Williams", "Kameron Michaels", "Mayhem Miller", "Miz Cracker", "Monét X Change", "Mo Heart", "Vanessa 'Vanjie' Mateo", "The Vixen", "Yuhua Hamasaki"],
-                "US S11": ["A'keria C. Davenport", "Ariel Versace", "Brooke Lynn Hytes", "Honey Davenport", "Kahanna Montrese", "Mercedes Iman Diamond", "Nina West", "Plastique Tiara", "Ra'Jah O'Hara", "Scarlet Envy", "Shuga Cain", "Silky Nutmeg Ganache", "Yvie Oddly"],
-                "US S12": ["Aiden Zhane", "Brita", "Crystal Methyd", "Dahlia Sin", "Gigi Goode", "Heidi N Closet", "Jackie Cox", "Jaida Essence Hall", "Jan", "Nicky Doll", "Rock M. Sakura", "Widow Von'Du"],
-                "US S13": ["Denali", "Gottmik", "Joey Jay", "Kahmora Hall", "Kandy Muse", "LaLa Ri", "Olivia Lux", "Rosé", "Symone", "Tamisha Iman", "Tina Burner", "Utica Queen"],
-                "US S14": ["Alyssa Hunter", "Angeria Paris VanMicheals", "Bosco", "Daya Betty", "DeJa Skye", "Jasmine Kennedie", "Jorgeous", "June Jambalaya", "Kerri Colby", "Kornbread Jeté", "Lady Camden", "Maddy Morphosis", "Orion Story", "Willow Pill"],
-                "US S15": ["Amethyst", "Anetra", "Aura Mayari", "Irene Dubois", "Jax", "Loosey LaDuca", "Luxx Noir London", "Malaysia Babydoll Foxx", "Marcia Marcia Marcia", "Mistress Isabelle Brooks", "Robin Fierce", "Salina EsTitties", "Sasha Colby", "Spice", "Sugar"],
-                "US S16": ["Amanda Tori Meating", "Dawn", "Geneva Karr", "Hershii LiqCour-Jeté", "Megami", "Mhi'ya Iman Le'Paige", "Mirage", "Morphine Love Dion", "Nymphia Wind", "Plane Jane", "Plasma", "Q", "Sapphira Cristál", "Xunami Muse"],
-                "UK S1": ["Baga Chipz", "Blu Hydrangea", "Cheryl Hole", "Crystal (UK)", "Divina De Campo", "Gothy Kendoll", "Scaredy Kat", "Sum Ting Wong", "The Vivienne", "Vinegar Strokes"],
-                "UK S2": ["A'Whora", "Asttina Mandella", "Bimini", "Cherry Valentine", "Ellie Diamond", "Ginny Lemon", "Joe Black", "Lawrence Chaney", "Sister Sister", "Tayce", "Tia Kofi", "Veronica Green"],
-                "UK S3": ["Anubis", "Charity Kase", "Choriza May", "Elektra Fence", "Ella Vaday", "Kitty Scott-Claus", "Krystal Versace", "River Medway", "Scarlett Harlett", "Vanity Milan", "Victoria Scone"],
-                "UK S4": ["Baby", "Black Peppa", "Cheddar Gorgeous", "Copper Topp", "Dakota Schiffer", "Danny Beard", "Jonbers Blonde", "Just May", "Le Fil", "Pixie Polite", "Sminty Drop", "Starlet"],
-                "UK S5": ["Alexis Saint-Pete", "Banksie", "Cara Melle", "DeDeLicious", "Ginger Johnson", "Kate Butch", "Michael Marouli", "Miss Naomi Carter", "Tomara Thomas", "Vicki Vivacious"],
-                "CAN S1": ["Anastarzia Anaquway", "BOA", "Ilona Verley", "Jimbo", "Juice Boxx", "Kiara", "Kyne", "Lemon", "Priyanka", "Rita Baga", "Scarlett BoBo", "Tynomi Banks"],
-                "CAN S2": ["Adriana", "Beth", "Eve 6000", "Gia Metric", "Icesis Couture", "Kendall Gender", "Kimora Amour", "Océane Aqua-Black", "Pythia", "Stephanie Prince", "Suki Doll", "Synthia Kiss"],
-                "CAN S3": ["Bombae", "Chelazon Leroux", "Gisèle Lullaby", "Halal Bae", "Irma Gerd", "Jada Shada Hudson", "Kaos", "Kimmy Couture", "Lady Boom Boom", "Miss Fiercalicious", "Miss Moço", "Vivian Vanderpuss"],
-                "CAN S4": ["Aimee Yonce Shennel", "Aurora Matrix", "Denim", "Kiki Coe", "Kitten Kaboodle", "Luna DuBois", "Melinda Verga", "Nearah Nuff", "Sisi Superstar", "The Girlfriend Experience", "Venus"],
-                "Holland S1": ["Chelsea Boy", "Envy Peru", "Janey Jacké", "Madame Madness", "Ma'Ma Queen", "Megan Schoonbrood", "Miss Abby OMG", "Patty Pam-Pam", "Roem", "Sederginne"],
-                "Holland S2": ["Ivy-Elyse", "Juicy Kouture", "Keta Minaj", "Love Masisi", "My Little Puny", "Reggy B", "Tabitha", "The Countess", "Vanessa Van Cartier", "Vivaldi"],
-                "Thailand S1": ["Amadiva", "Anneé Maywong", "B Ella", "Bunny Be Fly", "Dearis Doll", "JAJA", "Meannie Minaj", "Morrigan", "Natalia Pliacam", "Petchra"],
-                "Thailand S2": ["Angele Anang", "Bandit", "Genie", "Kana Warrior", "Kandy Zyanide", "Katy Killer", "M Stranger Fox", "Maya B'Haro", "Mocha Diva", "Miss Gimhuay", "Silver Sonic", "Srimala", "Tormai", "Vanda Miss Joaquim"],
-                "Down Under S1": ["Anita Wigl'it", "Art Simone", "Coco Jumbo", "Elektra Shock (DU)", "Etcetera Etcetera", "Jojo Zaho", "Kita Mean", "Maxi Shield"],
-                "Down Under S2": ["Aubrey Haive", "Beverly Kills", "Faúx Fúr", "Hannah Conda", "Kween Kong", "Minnie Cooper", "Molly Poppinz", "Pomara Fifth", "Spankie Jackzon", "Yuri Guaii"],
-                "Down Under S3": ["Amyl", "Ashley Madison", "Bumpa Love", "Flor", "Gabriella Labucci", "Hollywould Star", "Isis Avis Loren", "Ivanna Drink", "Ivory Glaze", "Rita Menu"],
-                "España S1": ["Arantxa Castilla La Mancha", "Carmen Farala", "Dovima Nurmi", "Drag Vulcano", "Hugáceo Crujiente", "Inti", "Killer Queen", "Pupi Poisson", "Sagittaria", "The Macarena"],
-                "España S2": ["Ariel Rec", "Diamante Merybrown", "Drag Sethlas", "Estrella Xtravaganza", "Jota Carajota", "Juriji Der Klee", "Marina", "Marisa Prisa", "Onyx", "Samantha Ballentines", "Venedita Von Däsh"],
-                "España S3": ["Bestiah", "Chanel Anorex", "Clover Bish", "Drag Chuchi", "Hornella Góngora", "María Edília", "Kelly Roller", "Pakita", "Pink Chadora", "Pitita", "Vania Vainilla", "Visa"],
-                "Italia S1": ["Ava Hangar", "Divinity", "Elecktra Bionic", "Enorma Jean", "Farida Kant", "Ivana Vamp", "Le Riche", "Luquisha Lubamba"],
-                "Italia S2": ["Aura Eternal", "Gioffré", "La Diamond", "La Petite Noire", "Narciso", "Nehellenia", "Obama", "Panthera Virus", "Skandalove", "Tanissa Yoncè"],
-                "France S1": ["Elips", "Kam Hugh", "La Big Bertha", "La Briochée", "La Grande Dame", "La Kahena", "Lolita Banana", "Lova Ladiva", "Paloma", "Soa de Muse"],
-                "France S2": ["Cookie Kunty", "Ginger Bitch", "Keiona", "Kitty Space", "Mami Watta", "Moon", "Piche", "Punani", "Rose", "Sara Forever", "Vespi"],
-                "Philippines S1": ["Brigiding", "Corazon", "Eva Le Queen", "Gigi Era", "Lady Morgana", "Marina Summers", "Minty Fresh", "Precious Paula Nicole", "Prince", "Turing", "Viñas DeLuxe", "Xilhouete"],
-                "Philippines S2": ["Arizona Brandy", "Astrid Mercury", "Bernie", "DeeDee Marié Holliday", "Hana Beshie", "M1ss Jade So", "Matilduh", "Nicole Pardaux", "OV Cünt", "Tiny Deluxe"],
-            };
+        function loadPredefinedCasts() {
+            const predefinedCastsHtml = `
+            <div class="tabs-container">
+            <div>
+                <ul class="tab-box">
+                    <li class="tab-btn active" data-tab="usa">USA</li>
+                    <li class="tab-btn" data-tab="all-stars">All Stars</li>
+                    <li class="tab-btn" data-tab="uk">UK</li>
+                    <li class="tab-btn" data-tab="canada">Canada</li>
+                    <li class="tab-btn" data-tab="espana">España</li>
+                    <li class="tab-btn" data-tab="down-under">Down Under</li>
+                    <li class="tab-btn" data-tab="france">France</li>
+                    <li class="tab-btn" data-tab="italia">Italia</li>
+                    <li class="tab-btn" data-tab="philippines">Philippines</li>
+                    <li class="tab-btn" data-tab="thailand">Thailand</li>
+                    <li class="tab-btn" data-tab="holland">Holland</li>
+                </ul>
+            </div>
+        </div>
+        <div class="content-tab-box">
+            <div class="content-tab active" data-tab-content="usa">
+                <h2>Drag Race US</h2>
+                <div class="content-seasons">
+                    ${Object.keys(seasons).filter(k => k.startsWith("US")).map(seasonKey => `
+                        <div class="content-season">
+                            <h3 class="content-season-title">${seasonKey}</h3>
+                            <button class="btn-primary" onclick="predefCast('${seasonKey}')">Simulate</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="content-tab" data-tab-content="all-stars">
+                <h2>All Stars</h2>
+                <div class="content-seasons">
+                     ${Object.keys(seasons).filter(k => k.startsWith("All Stars")).map(seasonKey => `
+                        <div class="content-season">
+                            <h3 class="content-season-title">${seasonKey}</h3>
+                            <button class="btn-primary" onclick="predefCast('${seasonKey}')">Simulate</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="content-tab" data-tab-content="uk">
+                <h2>Drag Race UK</h2>
+                <div class="content-seasons">
+                    ${Object.keys(seasons).filter(k => k.startsWith("UK")).map(seasonKey => `
+                        <div class="content-season">
+                            <h3 class="content-season-title">${seasonKey}</h3>
+                            <button class="btn-primary" onclick="predefCast('${seasonKey}')">Simulate</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="content-tab" data-tab-content="canada">
+                <h2>Canada's Drag Race</h2>
+                <div class="content-seasons">
+                    ${Object.keys(seasons).filter(k => k.startsWith("CAN")).map(seasonKey => `
+                        <div class="content-season">
+                            <h3 class="content-season-title">${seasonKey}</h3>
+                            <button class="btn-primary" onclick="predefCast('${seasonKey}')">Simulate</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="content-tab" data-tab-content="espana">
+                <h2>Drag Race España</h2>
+                <div class="content-seasons">
+                    ${Object.keys(seasons).filter(k => k.startsWith("ES")).map(seasonKey => `
+                        <div class="content-season">
+                            <h3 class="content-season-title">${seasonKey}</h3>
+                            <button class="btn-primary" onclick="predefCast('${seasonKey}')">Simulate</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="content-tab" data-tab-content="down-under">
+                <h2>Drag Race Down Under</h2>
+                <div class="content-seasons">
+                    ${Object.keys(seasons).filter(k => k.startsWith("DU")).map(seasonKey => `
+                        <div class="content-season">
+                            <h3 class="content-season-title">${seasonKey}</h3>
+                            <button class="btn-primary" onclick="predefCast('${seasonKey}')">Simulate</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+             <div class="content-tab" data-tab-content="france">
+                <h2>Drag Race France</h2>
+                <div class="content-seasons">
+                    ${Object.keys(seasons).filter(k => k.startsWith("FR")).map(seasonKey => `
+                        <div class="content-season">
+                            <h3 class="content-season-title">${seasonKey}</h3>
+                            <button class="btn-primary" onclick="predefCast('${seasonKey}')">Simulate</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+             <div class="content-tab" data-tab-content="italia">
+                <h2>Drag Race Italia</h2>
+                <div class="content-seasons">
+                    ${Object.keys(seasons).filter(k => k.startsWith("ITA")).map(seasonKey => `
+                        <div class="content-season">
+                            <h3 class="content-season-title">${seasonKey}</h3>
+                            <button class="btn-primary" onclick="predefCast('${seasonKey}')">Simulate</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+             <div class="content-tab" data-tab-content="philippines">
+                <h2>Drag Race Philippines</h2>
+                <div class="content-seasons">
+                    ${Object.keys(seasons).filter(k => k.startsWith("PH")).map(seasonKey => `
+                        <div class="content-season">
+                            <h3 class="content-season-title">${seasonKey}</h3>
+                            <button class="btn-primary" onclick="predefCast('${seasonKey}')">Simulate</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="content-tab" data-tab-content="thailand">
+                <h2>Drag Race Thailand</h2>
+                <div class="content-seasons">
+                    ${Object.keys(seasons).filter(k => k.startsWith("THAI")).map(seasonKey => `
+                        <div class="content-season">
+                            <h3 class="content-season-title">${seasonKey}</h3>
+                            <button class="btn-primary" onclick="predefCast('${seasonKey}')">Simulate</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="content-tab" data-tab-content="holland">
+                <h2>Drag Race Holland</h2>
+                <div class="content-seasons">
+                    ${Object.keys(seasons).filter(k => k.startsWith("HOLL")).map(seasonKey => `
+                        <div class="content-season">
+                            <h3 class="content-season-title">${seasonKey}</h3>
+                            <button class="btn-primary" onclick="predefCast('${seasonKey}')">Simulate</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+            `;
+            predefinedCastsContainer.innerHTML = predefinedCastsHtml;
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const contentTabs = document.querySelectorAll('.content-tab');
 
-            for (const seasonName in seasons) {
-                const btn = document.createElement('button');
-                btn.className = 'btn-secondary font-bold py-2 px-4 rounded-lg text-sm transition-transform transform hover:scale-105';
-                btn.textContent = seasonName;
-                btn.addEventListener('click', () => {
-                    originalCastData = ALL_QUEENS_DATA.filter(q => seasons[seasonName].includes(q.name));
-                    updateCurrentCastDisplay();
-                    renderSearchResults(ALL_QUEENS_DATA); // Update search results to reflect selection
+            tabBtns.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabBtns.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    const tabId = tab.getAttribute('data-tab');
+                    contentTabs.forEach(content => {
+                        if(content.getAttribute('data-tab-content') === tabId) {
+                            content.classList.add('active');
+                        } else {
+                            content.classList.remove('active');
+                        }
+                    });
                 });
-                predefinedCastsContainer.appendChild(btn);
-            }
+            });
         }
         
-        function renderSearchResults(queens) {
-            searchResultsContainer.innerHTML = '';
-            queens.forEach(qData => {
-                const isSelected = originalCastData.some(q => q.name === qData.name);
-                const card = document.createElement('div');
-                card.className = `queen-card bg-white p-2 text-center shadow-md transition-all duration-200 ${isSelected ? 'selected' : ''}`;
-                card.dataset.queenName = qData.name;
-                card.innerHTML = `<img src="${qData.image}" class="w-20 h-20 rounded-full mx-auto mb-2 border-2 ${isSelected ? 'border-pink-400' : 'border-gray-200'}"><p class="text-xs font-medium text-gray-700">${qData.name}</p>`;
-                card.addEventListener('click', () => {
-                    toggleQueenSelection(qData);
-                    renderSearchResults(queens); // Re-render to update the visual state
-                });
-                searchResultsContainer.appendChild(card);
-            });
-        }
-
-        function toggleQueenSelection(queenData) {
-            const isSelected = originalCastData.some(q => q.name === queenData.name);
-
-            if (!isSelected) {
-                originalCastData.push(queenData);
-            } else {
-                originalCastData = originalCastData.filter(q => q.name !== queenData.name);
-            }
+       window.predefCast = function(seasonKey) {
+            originalCastData = ALL_QUEENS_DATA.filter(q => seasons[seasonKey].includes(q.name));
             updateCurrentCastDisplay();
+            startSimulation();
         }
 
-        function addRandomQueen() {
-            const availableQueens = ALL_QUEENS_DATA.filter(fullQueen => 
-                !originalCastData.some(castQueen => castQueen.name === fullQueen.name)
-            );
-
-            if(availableQueens.length === 0) {
-                showMessage('No More Queens', 'All available queens have been selected.');
-                return;
-            }
-            
-            const randomQueenData = availableQueens[Math.floor(Math.random() * availableQueens.length)];
-            toggleQueenSelection(randomQueenData);
-            renderSearchResults(ALL_QUEENS_DATA); // Update search to show selection
-        }
-        
         function updateCurrentCastDisplay() {
             currentCastDisplay.innerHTML = '';
             originalCastData.forEach(qData => {
@@ -1553,10 +1647,6 @@
                 card.className = 'bg-pink-100 rounded-lg p-2 text-center shadow-inner';
                 card.dataset.queenName = qData.name;
                 card.innerHTML = `<p class="text-xs font-medium text-pink-700 truncate">${qData.name}</p>`;
-                card.addEventListener('click', () => {
-                    toggleQueenSelection(qData);
-                    renderSearchResults(ALL_QUEENS_DATA); // Update search to reflect deselection
-                });
                 currentCastDisplay.appendChild(card);
             });
             castSizeInput.value = originalCastData.length;
@@ -1588,7 +1678,6 @@
             currentCastDisplay.innerHTML = '';
             selectedQueenCountEl.textContent = 0;
             castSizeInput.value = 0;
-            renderSearchResults(ALL_QUEENS_DATA);
         }
         
         function showMessage(title, message) {
@@ -1604,6 +1693,58 @@
              modal.classList.add('hidden');
              modal.classList.remove('flex');
         });
+
+        const seasons = {
+                "US S1": ["Akashia", "BeBe Zahara Benet", "Jade Sotomayor", "Nina Flowers", "Ongina", "Rebecca Glasscock", "Shannel", "Tammie Brown", "Victoria 'Porkchop' Parker"],
+                "US S2": ["Jessica Wild", "Jujubee", "Morgan McMichaels", "Mystique Summers", "Nicole Paige Brooks", "Pandora Boxx", "Sahara Davenport", "Shangela", "Kylie Sonique Love", "Tatianna", "King Tyra"],
+                "US S3": ["Alexis Mateo", "Carmen Carrera", "Delta Work", "India Ferrah", "Manila Luzon", "Mariah Paris Balenciaga", "Mimi Imfurst", "Phoenix", "Raja", "Stacy Layne Matthews", "Venus D-Lite", "Yara Sofia"],
+                "US S4": ["Alisa Summers", "Chad Michaels", "Dida Ritz", "Jiggly Caliente", "Kenya Olivera", "Lashauwn Beyond", "Latrice Royale", "Madame LaQueer", "Milan", "Jaremi Carey", "The Princess", "Willam"],
+                "US S5": ["Alaska", "Alyssa Edwards", "Coco Montrese", "Detox", "Honey Mahogany", "Ivy Winters", "Jade Jolie", "Jinkx Monsoon", "Lineysha Sparx", "Monica Beverly Hillz", "Penny Tration", "Roxxxy Andrews", "Serena ChaCha", "Vivienne Pinay"],
+                "US S6": ["Adore Delano", "April Carrión", "BenDeLaCreme", "Bianca Del Rio", "Courtney Act", "Darienne Lake", "Gia Gunn", "Joslyn Fox", "Kelly Mantle", "Laganja Estranja", "Magnolia Crawford", "Milk", "Trinity K. Bonet", "Vivacious"],
+                "US S7": ["Ginger Minj", "Jaidynn Diore Fierce", "Jasmine Masters", "Kandy Ho", "Katya", "Kennedy Davenport", "Max", "Miss Fame", "Mrs. Kasha Davis", "Pearl", "Frisbee Jenkins", "Tempest DuJour", "Trixie Mattel", "Violet Chachki"],
+                "US S8": ["Acid Betty", "Bob The Drag Queen", "Chi Chi DeVayne", "Cynthia Lee Fontaine", "Dax ExclamationPoint", "Derrick Barry", "Kim Chi", "Laila McQueen", "Naomi Smalls", "Naysha Lopez", "Robbie Turner", "Thorgy Thor"],
+                "US S9": ["Aja", "Alexis Michelle", "Eureka!", "Farrah Moan", "Jaymes Mansfield", "Kimora Blac", "Nina Bo'nina Brown", "Peppermint", "Sasha Velour", "Shea Couleé", "Trinity The Tuck", "Valentina"],
+                "US S10": ["Aquaria", "Asia O'Hara", "Blair St. Clair", "Dusty Ray Bottoms", "Kalorie K. Williams", "Kameron Michaels", "Mayhem Miller", "Miz Cracker", "Monét X Change", "Mo Heart", "Vanessa 'Vanjie' Mateo", "The Vixen", "Yuhua Hamasaki"],
+                "US S11": ["A'keria C. Davenport", "Ariel Versace", "Brooke Lynn Hytes", "Honey Davenport", "Kahanna Montrese", "Mercedes Iman Diamond", "Nina West", "Plastique Tiara", "Ra'Jah O'Hara", "Scarlet Envy", "Shuga Cain", "Silky Nutmeg Ganache", "Yvie Oddly"],
+                "US S12": ["Aiden Zhane", "Brita", "Crystal Methyd", "Dahlia Sin", "Gigi Goode", "Heidi N Closet", "Jackie Cox", "Jaida Essence Hall", "Jan", "Nicky Doll", "Rock M. Sakura", "Widow Von'Du"],
+                "US S13": ["Denali", "Gottmik", "Joey Jay", "Kahmora Hall", "Kandy Muse", "LaLa Ri", "Olivia Lux", "Rosé", "Symone", "Tamisha Iman", "Tina Burner", "Utica Queen"],
+                "US S14": ["Alyssa Hunter", "Angeria Paris VanMicheals", "Bosco", "Daya Betty", "DeJa Skye", "Jasmine Kennedie", "Jorgeous", "June Jambalaya", "Kerri Colby", "Kornbread Jeté", "Lady Camden", "Maddy Morphosis", "Orion Story", "Willow Pill"],
+                "US S15": ["Amethyst", "Anetra", "Aura Mayari", "Irene Dubois", "Jax", "Loosey LaDuca", "Luxx Noir London", "Malaysia Babydoll Foxx", "Marcia Marcia Marcia", "Mistress Isabelle Brooks", "Robin Fierce", "Salina EsTitties", "Sasha Colby", "Spice", "Sugar"],
+                "US S16": ["Amanda Tori Meating", "Dawn", "Geneva Karr", "Hershii LiqCour-Jeté", "Megami", "Mhi'ya Iman Le'Paige", "Mirage", "Morphine Love Dion", "Nymphia Wind", "Plane Jane", "Plasma", "Q", "Sapphira Cristál", "Xunami Muse"],
+                "All Stars S1": ["Akashia", "Alexis Mateo", "BeBe Zahara Benet", "Chad Michaels", "Darienne Lake", "Delta Work", "India Ferrah", "Jujubee", "Latrice Royale", "Manila Luzon", "Mimi Imfurst", "Morgan McMichaels", "Nina Flowers", "Pandora Boxx", "Raven", "Shannel", "Tammie Brown", "Yara Sofia"],
+                "All Stars S2": ["Adore Delano", "Alaska", "Alyssa Edwards", "Coco Montrese", "Detox", "Ginger Minj", "Katya", "Phi Phi O'Hara", "Roxxxy Andrews", "Tatianna"],
+                "All Stars S3": ["Aja", "BenDeLaCreme", "Chi Chi DeVayne", "Kennedy Davenport", "Milk", "Morgan McMichaels", "Shangela", "Thorgy Thor", "Trixie Mattel"],
+                "All Stars S4": ["Farrah Moan", "Gia Gunn", "Jasmine Masters", "Latrice Royale", "Manila Luzon", "Monét X Change", "Monique Heart", "Naomi Smalls", "Trinity The Tuck", "Valentina"],
+                "All Stars S5": ["Alexis Mateo", "Blair St. Clair", "Derrick Barry", "India Ferrah", "Jujubee", "Mariah Paris Balenciaga", "Mayhem Miller", "Miz Cracker", "Ongina", "Shea Couleé"],
+                "All Stars S6": ["A'keria C. Davenport", "Eureka!", "Ginger Minj", "Jan", "Jiggly Caliente", "Kylie Sonique Love", "Pandora Boxx", "Ra'Jah O'Hara", "Scarlet Envy", "Serena ChaCha", "Silky Nutmeg Ganache", "Trinity K. Bonet", "Yara Sofia"],
+                "All Stars S7": ["Jaida Essence Hall", "Jinkx Monsoon", "Monét X Change", "Raja", "Shea Couleé", "The Vivienne", "Trinity The Tuck", "Yvie Oddly"],
+                "All Stars S8": ["Alexis Michelle", "Darienne Lake", "Heidi N Closet", "Jaymes Mansfield", "Jessica Wild", "Jimbo", "Kahanna Montrese", "Kandy Muse", "LaLa Ri", "Monica Beverly Hillz", "Mrs. Kasha Davis", "Naysha Lopez"],
+                "UK S1": ["Baga Chipz", "Blu Hydrangea", "Cheryl Hole", "Crystal (UK)", "Divina De Campo", "Gothy Kendoll", "Scaredy Kat", "Sum Ting Wong", "The Vivienne", "Vinegar Strokes"],
+                "UK S2": ["A'Whora", "Asttina Mandella", "Bimini", "Cherry Valentine", "Ellie Diamond", "Ginny Lemon", "Joe Black", "Lawrence Chaney", "Sister Sister", "Tayce", "Tia Kofi", "Veronica Green"],
+                "UK S3": ["Anubis", "Charity Kase", "Choriza May", "Elektra Fence", "Ella Vaday", "Kitty Scott-Claus", "Krystal Versace", "River Medway", "Scarlett Harlett", "Vanity Milan", "Victoria Scone"],
+                "UK S4": ["Baby", "Black Peppa", "Cheddar Gorgeous", "Copper Topp", "Dakota Schiffer", "Danny Beard", "Jonbers Blonde", "Just May", "Le Fil", "Pixie Polite", "Sminty Drop", "Starlet"],
+                "UK S5": ["Alexis Saint-Pete", "Banksie", "Cara Melle", "DeDeLicious", "Ginger Johnson", "Kate Butch", "Michael Marouli", "Miss Naomi Carter", "Tomara Thomas", "Vicki Vivacious"],
+                "CAN S1": ["Anastarzia Anaquway", "BOA", "Ilona Verley", "Jimbo", "Juice Boxx", "Kiara", "Kyne", "Lemon", "Priyanka", "Rita Baga", "Scarlett BoBo", "Tynomi Banks"],
+                "CAN S2": ["Adriana", "Beth", "Eve 6000", "Gia Metric", "Icesis Couture", "Kendall Gender", "Kimora Amour", "Océane Aqua-Black", "Pythia", "Stephanie Prince", "Suki Doll", "Synthia Kiss"],
+                "CAN S3": ["Bombae", "Chelazon Leroux", "Gisèle Lullaby", "Halal Bae", "Irma Gerd", "Jada Shada Hudson", "Kaos", "Kimmy Couture", "Lady Boom Boom", "Miss Fiercalicious", "Miss Moço", "Vivian Vanderpuss"],
+                "CAN S4": ["Aimee Yonce Shennel", "Aurora Matrix", "Denim", "Kiki Coe", "Kitten Kaboodle", "Luna DuBois", "Melinda Verga", "Nearah Nuff", "Sisi Superstar", "The Girlfriend Experience", "Venus"],
+                "HOLL S1": ["Chelsea Boy", "Envy Peru", "Janey Jacké", "Madame Madness", "Ma'Ma Queen", "Megan Schoonbrood", "Miss Abby OMG", "Patty Pam-Pam", "Roem", "Sederginne"],
+                "HOLL S2": ["Ivy-Elyse", "Juicy Kouture", "Keta Minaj", "Love Masisi", "My Little Puny", "Reggy B", "Tabitha", "The Countess", "Vanessa Van Cartier", "Vivaldi"],
+                "THAI S1": ["Amadiva", "Anneé Maywong", "B Ella", "Bunny Be Fly", "Dearis Doll", "JAJA", "Meannie Minaj", "Morrigan", "Natalia Pliacam", "Petchra"],
+                "THAI S2": ["Angele Anang", "Bandit", "Genie", "Kana Warrior", "Kandy Zyanide", "Katy Killer", "M Stranger Fox", "Maya B'Haro", "Mocha Diva", "Miss Gimhuay", "Silver Sonic", "Srimala", "Tormai", "Vanda Miss Joaquim"],
+                "DU S1": ["Anita Wigl'it", "Art Simone", "Coco Jumbo", "Elektra Shock (DU)", "Etcetera Etcetera", "Jojo Zaho", "Kita Mean", "Maxi Shield"],
+                "DU S2": ["Aubrey Haive", "Beverly Kills", "Faúx Fúr", "Hannah Conda", "Kween Kong", "Minnie Cooper", "Molly Poppinz", "Pomara Fifth", "Spankie Jackzon", "Yuri Guaii"],
+                "DU S3": ["Amyl", "Ashley Madison", "Bumpa Love", "Flor", "Gabriella Labucci", "Hollywould Star", "Isis Avis Loren", "Ivanna Drink", "Ivory Glaze", "Rita Menu"],
+                "ES S1": ["Arantxa Castilla La Mancha", "Carmen Farala", "Dovima Nurmi", "Drag Vulcano", "Hugáceo Crujiente", "Inti", "Killer Queen", "Pupi Poisson", "Sagittaria", "The Macarena"],
+                "ES S2": ["Ariel Rec", "Diamante Merybrown", "Drag Sethlas", "Estrella Xtravaganza", "Jota Carajota", "Juriji Der Klee", "Marina", "Marisa Prisa", "Onyx", "Samantha Ballentines", "Venedita Von Däsh"],
+                "ES S3": ["Bestiah", "Chanel Anorex", "Clover Bish", "Drag Chuchi", "Hornella Góngora", "María Edília", "Kelly Roller", "Pakita", "Pink Chadora", "Pitita", "Vania Vainilla", "Visa"],
+                "ITA S1": ["Ava Hangar", "Divinity", "Elecktra Bionic", "Enorma Jean", "Farida Kant", "Ivana Vamp", "Le Riche", "Luquisha Lubamba"],
+                "ITA S2": ["Aura Eternal", "Gioffré", "La Diamond", "La Petite Noire", "Narciso", "Nehellenia", "Obama", "Panthera Virus", "Skandalove", "Tanissa Yoncè"],
+                "FR S1": ["Elips", "Kam Hugh", "La Big Bertha", "La Briochée", "La Grande Dame", "La Kahena", "Lolita Banana", "Lova Ladiva", "Paloma", "Soa de Muse"],
+                "FR S2": ["Cookie Kunty", "Ginger Bitch", "Keiona", "Kitty Space", "Mami Watta", "Moon", "Piche", "Punani", "Rose", "Sara Forever", "Vespi"],
+                "PH S1": ["Brigiding", "Corazon", "Eva Le Queen", "Gigi Era", "Lady Morgana", "Marina Summers", "Minty Fresh", "Precious Paula Nicole", "Prince", "Turing", "Viñas DeLuxe", "Xilhouete"],
+                "PH S2": ["Arizona Brandy", "Astrid Mercury", "Bernie", "DeeDee Marié Holliday", "Hana Beshie", "M1ss Jade So", "Matilduh", "Nicole Pardaux", "OV Cünt", "Tiny Deluxe"],
+            };
 
         document.addEventListener('DOMContentLoaded', initializeApp);
     </script>
