@@ -181,6 +181,7 @@
                                 <option value="all-stars">All Stars</option>
                                 <option value="lipsync-assassin">Lipsync Assassin</option>
                                 <option value="all-winners">All Winners</option>
+                                <option value="tournament-all-stars">Tournament of All Stars</option>
                             </select>
                         </div>
 
@@ -793,7 +794,27 @@
                 usedChallenges: [],
                 isFinale: false,
                 lastLipsyncWinner: null,
+                // Tournament of All Stars specific state
+                tournament: {
+                    brackets: { a: [], b: [], c: [] },
+                    points: {},
+                    currentBracket: 'a',
+                    bracketEpisode: 0,
+                    phase: 'bracket' // bracket, semifinal, finale
+                }
             };
+
+            if (state.seasonFormat === 'tournament-all-stars') {
+                // Initialize points for all queens
+                state.currentCast.forEach(q => { state.tournament.points[q.name] = 0; });
+
+                // Divide queens into brackets
+                let shuffledCast = [...state.currentCast].sort(() => 0.5 - Math.random());
+                state.tournament.brackets.a = shuffledCast.slice(0, 6);
+                state.tournament.brackets.b = shuffledCast.slice(6, 12);
+                state.tournament.brackets.c = shuffledCast.slice(12, 18);
+            }
+
             // Initialize queen properties
              state.currentCast.forEach(queen => {
                 queen.isImmune = false;
@@ -931,6 +952,11 @@
             if (state.isFinale) return;
             state.episodeCount++;
             const finaleFormat = document.getElementById('finale').value;
+        
+            if (state.seasonFormat === 'tournament-all-stars') {
+                runTournamentEpisode();
+                return;
+            }
         
             if (state.seasonFormat === 'all-winners' && state.episodeCount > 7) {
                 showAllWinnersFinale();
@@ -1116,6 +1142,146 @@
             state.lastLipsyncWinner = results.lipSyncWinner;
             updateAllWinnersTrackRecords(results);
             displayEpisodeResults(results);
+        }
+
+        // --- NEW: Tournament of All Stars Logic ---
+        function runTournamentEpisode() {
+            if (state.tournament.phase === 'bracket') {
+                runBracketEpisode();
+            } else if (state.tournament.phase === 'semifinal') {
+                runSemifinalEpisode();
+            } else { // finale
+                runSmackdownFinale();
+            }
+        }
+
+        function runBracketEpisode() {
+            state.tournament.bracketEpisode++;
+            const currentQueens = state.tournament.brackets[state.tournament.currentBracket];
+
+            const results = {};
+            let availableChallenges = ALL_CHALLENGES.filter(c => !state.usedChallenges.includes(c));
+            if (availableChallenges.length === 0) {
+                state.usedChallenges = [];
+                availableChallenges = [...ALL_CHALLENGES];
+            }
+            results.currentChallenge = availableChallenges[Math.floor(Math.random() * availableChallenges.length)];
+            state.challengeLog.push(results.currentChallenge);
+            state.usedChallenges.push(results.currentChallenge);
+
+            currentQueens.forEach(queen => queen.performanceScore = queen.getPerformance(results.currentChallenge));
+            currentQueens.sort((a, b) => b.performanceScore - a.performanceScore);
+
+            const tops = currentQueens.slice(0, 2);
+            const bottoms = currentQueens.slice(-2);
+
+            // Point System
+            state.tournament.points[tops[0].name] += 2;
+            state.tournament.points[tops[1].name] += 2;
+
+            const lipSyncWinner = tops[0].getLipsyncPerformance() > tops[1].getLipsyncPerformance() ? tops[0] : tops[1];
+            state.tournament.points[lipSyncWinner.name] += 1; // Extra point for lip sync winner
+
+            // MVQ Point
+            const mvqQueen = bottoms[Math.floor(Math.random() * bottoms.length)];
+            const eligibleForPoint = currentQueens.filter(q => !tops.includes(q));
+            const pointReceiver = eligibleForPoint[Math.floor(Math.random() * eligibleForPoint.length)];
+            state.tournament.points[pointReceiver.name] += 1;
+            
+            // Display Bracket Results
+            displayBracketResults(results.currentChallenge, currentQueens, tops, bottoms, lipSyncWinner, mvqQueen, pointReceiver);
+
+            // Move to next bracket or phase
+            if (state.tournament.bracketEpisode === 3) {
+                state.tournament.bracketEpisode = 0;
+                if (state.tournament.currentBracket === 'a') {
+                    state.tournament.currentBracket = 'b';
+                } else if (state.tournament.currentBracket === 'b') {
+                    state.tournament.currentBracket = 'c';
+                } else { // End of bracket phase
+                    state.tournament.phase = 'semifinal';
+                    // Determine the top 3 from each bracket
+                    const semifinalists = [];
+                    ['a', 'b', 'c'].forEach(bracketKey => {
+                        const bracketQueens = state.tournament.brackets[bracketKey];
+                        bracketQueens.sort((a, b) => state.tournament.points[b.name] - state.tournament.points[a.name]);
+                        semifinalists.push(...bracketQueens.slice(0, 3));
+                    });
+                    state.currentCast = semifinalists;
+                }
+            }
+        }
+
+        function runSemifinalEpisode() {
+             // For simplicity, we will run a regular elimination episode for the semifinals
+            runRegularEpisode();
+
+            if (state.episodeCount === 11) { // After the second semifinal episode
+                // Here you would implement the logic for the user to choose a wildcard.
+                // For now, we'll just continue to the finale with the remaining queens.
+            }
+
+            if (state.currentCast.length <= 4) {
+                state.tournament.phase = 'finale';
+            }
+        }
+
+        function runSmackdownFinale() {
+            state.isFinale = true;
+            nextEpisodeBtn.classList.add('hidden');
+            simulationScreen.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+            state.challengeLog.push('Finale');
+
+            // Lip Sync Smackdown
+            let remainingQueens = [...state.currentCast];
+            while (remainingQueens.length > 1) {
+                let queen1 = remainingQueens.pop();
+                let queen2 = remainingQueens.pop();
+                let winner = queen1.getLipsyncPerformance() > queen2.getLipsyncPerformance() ? queen1 : queen2;
+                remainingQueens.push(winner);
+                let loser = winner === queen1 ? queen2 : queen1;
+                state.eliminatedCast.unshift(loser);
+            }
+
+            const winner = remainingQueens[0];
+            winner.addToTrackRecord("WINNER");
+            state.eliminatedCast.forEach(q => {
+                if (!q.trackRecord[state.episodeCount - 1]) {
+                    q.addToTrackRecord("ELIM");
+                }
+            });
+
+            state.currentCast = [winner];
+
+            winnerDisplay.innerHTML = `<div class="text-center">
+                <h3 class="text-5xl font-bold text-yellow-400 mb-4" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">And the winner is...</h3>
+                <img src="${winner.image}" class="w-48 h-48 rounded-full mx-auto border-4 border-yellow-400 shadow-2xl">
+                <p class="text-4xl font-bold mt-4">${winner.name}!</p>
+                <p class="text-xl text-gray-500 mt-2">Condragulations, you're a winner, baby!</p>
+            </div>`;
+            
+            renderTrackRecord();
+        }
+        
+        function displayBracketResults(challenge, queens, tops, bottoms, lipSyncWinner, mvqQueen, pointReceiver) {
+            let content = `<h2 class="text-3xl font-bold mb-4 header">Bracket ${state.tournament.currentBracket.toUpperCase()} - Episode ${state.tournament.bracketEpisode}</h2>`;
+            content += `<p class="mb-4 text-lg"><strong class="text-pink-500">Maxi Challenge:</strong> A fierce ${challenge} challenge!</p>`;
+            content += `<h3 class="text-2xl font-semibold mt-6 mb-3 text-gray-700">Critiques</h3>`;
+            content += `<p class="text-lg"><strong class="text-blue-500">Top 2:</strong> ${tops.map(q => q.name).join(' & ')}</p>`;
+            content += `<p class="text-lg"><strong class="text-red-500">Bottoms:</strong> ${bottoms.map(q => q.name).join(', ')}</p>`;
+            content += `<h3 class="text-2xl font-semibold mt-6 mb-3 text-gray-700">Lip Sync For Your Legacy</h3>`;
+            content += `<p class="text-lg">${tops[0].name} vs. ${tops[1].name}</p>`;
+            content += `<p class="mt-2 text-lg"><strong class="text-yellow-500">${lipSyncWinner.name}</strong> is the winner of the lip sync!</p>`;
+            content += `<p class="mt-4 text-purple-500"><strong>${mvqQueen.name}</strong> has awarded their MVQ point to <strong>${pointReceiver.name}</strong>!</p>`;
+
+            content += `<h3 class="text-2xl font-semibold mt-6 mb-3 text-gray-700">Bracket Points</h3>`;
+            queens.sort((a, b) => state.tournament.points[b.name] - state.tournament.points[a.name]);
+            queens.forEach(q => {
+                content += `<p class="text-lg">${q.name}: ${state.tournament.points[q.name]} points</p>`;
+            });
+
+            episodeContent.innerHTML = content;
         }
         
         function showAllWinnersFinale() {
@@ -1545,6 +1711,10 @@
 
 
         function startSimulation() {
+            if (document.getElementById('format').value === 'tournament-all-stars' && originalCastData.length !== 18) {
+                showMessage('Invalid Cast Size', 'The Tournament of All Stars format requires exactly 18 queens.');
+                return;
+            }
             if (originalCastData.length < 5) {
                 showMessage('Cast Too Small', 'Please select at least 5 queens to start.');
                 return;
