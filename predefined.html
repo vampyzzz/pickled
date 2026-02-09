@@ -7,71 +7,96 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Custom Styles for a more Drag-tastic feel */
+        :root {
+            --bg: #09070d;
+            --surface: rgba(20, 16, 29, 0.9);
+            --text: #fceeff;
+            --muted: #d6bddf;
+            --pink: #ff4fa3;
+            --pink-strong: #ff2a8d;
+            --focus: #ffd6ec;
+            --border: rgba(255, 126, 186, 0.35);
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #ffdde1, #ee9ca7);
-            color: #333;
-            background-image: url('https://www.transparenttextures.com/patterns/sparkles.png');
+            background: radial-gradient(circle at top, #241033 0%, var(--bg) 45%, #060409 100%);
+            color: var(--text);
         }
+
         .main-container {
-            background-color: rgba(255, 255, 255, 0.85);
+            background: linear-gradient(150deg, rgba(255, 79, 163, 0.08), rgba(20, 16, 29, 0.98));
+            border: 1px solid var(--border);
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
         }
+
         .header {
-            background: linear-gradient(to right, #d474a0, #a64ca6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #ff8cc4;
+            text-shadow: 0 2px 18px rgba(255, 60, 150, 0.45);
         }
+
         .btn-primary {
-            background: linear-gradient(to right, #d474a0, #a64ca6);
-            color: white;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            list-style: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--pink), var(--pink-strong));
+            color: #200718;
+            border: 1px solid #ff8fc7;
+            border-radius: 9999px;
+            font-weight: 700;
+            transition: all 0.25s ease;
+            box-shadow: 0 8px 20px rgba(255, 42, 141, 0.3);
         }
+
         .btn-primary:hover {
-            transform: scale(1.05) translateY(-2px);
-            box-shadow: 0 6px 20px rgba(166, 76, 166, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 22px rgba(255, 42, 141, 0.4);
+            filter: brightness(1.05);
         }
+
         .tab-btn {
             list-style: none;
             padding: 10px 20px;
             cursor: pointer;
-            background-color: #f1f5f9;
-            border: 1px solid #e2e8f0;
+            background-color: #22152c;
+            border: 1px solid var(--border);
             border-radius: 9999px;
             margin: 0 5px;
             white-space: nowrap;
+            color: #ffd4ea;
         }
 
         .tab-btn.active {
-            background-color: #d474a0;
-            color: white;
+            background-color: var(--pink);
+            color: #220415;
         }
 
-        .content-tab {
-            display: none;
-        }
+        .content-tab { display: none; }
+        .content-tab.active { display: block; }
 
-        .content-tab.active {
-            display: block;
-        }
         .content-seasons {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 20px;
         }
+
         .content-season {
-            background-color: #fff;
+            background-color: var(--surface);
+            border: 1px solid rgba(255,255,255,0.1);
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 10px 18px rgba(0,0,0,0.3);
             text-align: center;
         }
-        .content-season-title {
-            font-weight: bold;
-            margin-bottom: 10px;
+
+        .content-season-title { font-weight: bold; margin-bottom: 10px; color: #ffe3f1; }
+        .text-gray-500, .text-gray-600, .text-gray-700 { color: var(--muted) !important; }
+
+        *:focus-visible {
+            outline: 3px solid var(--focus);
+            outline-offset: 2px;
+            border-radius: 8px;
         }
     </style>
 </head>
