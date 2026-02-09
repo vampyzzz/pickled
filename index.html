@@ -7,124 +7,158 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Custom Styles for a more Drag-tastic feel */
+        :root {
+            --bg: #09070d;
+            --bg-elevated: #14101d;
+            --surface: rgba(20, 16, 29, 0.9);
+            --surface-soft: rgba(255, 255, 255, 0.04);
+            --text: #fceeff;
+            --muted: #d6bddf;
+            --pink: #ff4fa3;
+            --pink-strong: #ff2a8d;
+            --pink-soft: #ffc9e2;
+            --focus: #ffd6ec;
+            --border: rgba(255, 126, 186, 0.35);
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #ffdde1, #ee9ca7);
-            color: #333;
-            background-image: url('https://www.transparenttextures.com/patterns/sparkles.png');
+            background: radial-gradient(circle at top, #241033 0%, var(--bg) 45%, #060409 100%);
+            color: var(--text);
+            line-height: 1.55;
         }
+
         .main-container {
-            background-color: rgba(255, 255, 255, 0.85);
+            background: linear-gradient(150deg, rgba(255, 79, 163, 0.08), rgba(20, 16, 29, 0.98));
+            border: 1px solid var(--border);
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
         }
+
         .header {
-            background: linear-gradient(to right, #d474a0, #a64ca6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #ff8cc4;
+            text-shadow: 0 2px 18px rgba(255, 60, 150, 0.45);
         }
+
         .btn-primary {
-            background: linear-gradient(to right, #d474a0, #a64ca6);
-            color: white;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, var(--pink), var(--pink-strong));
+            color: #1d0620;
+            font-weight: 700;
+            border: 1px solid #ff8fc7;
+            transition: all 0.25s ease;
+            box-shadow: 0 8px 20px rgba(255, 42, 141, 0.3);
         }
+
         .btn-primary:hover {
-            transform: scale(1.05) translateY(-2px);
-            box-shadow: 0 6px 20px rgba(166, 76, 166, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 22px rgba(255, 42, 141, 0.4);
+            filter: brightness(1.05);
         }
+
         .btn-secondary {
-            background-color: #f1f5f9;
-            color: #4c51bf;
-            border: 1px solid #e2e8f0;
-            transition: all 0.3s ease;
+            background-color: #22152c;
+            color: #ffd4ea;
+            border: 1px solid var(--border);
+            transition: all 0.25s ease;
         }
+
         .btn-secondary:hover {
-            background-color: #e2e8f0;
+            background-color: #2b1a38;
             transform: translateY(-2px);
         }
+
         .queen-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
             cursor: pointer;
             border-radius: 12px;
+            background: var(--surface-soft);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
+
         .queen-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 18px rgba(0, 0, 0, 0.35);
         }
+
         .queen-card.selected {
-            border: 2px solid #d474a0;
-            box-shadow: 0 0 15px rgba(212, 116, 160, 0.5);
+            border: 2px solid var(--pink);
+            box-shadow: 0 0 0 3px rgba(255, 79, 163, 0.25);
         }
+
         .modal {
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(6px);
         }
+
         .modal-content {
-            background-color: #ffffff;
-            color: #333;
+            background-color: #130f1c;
+            color: var(--text);
+            border: 1px solid var(--border);
         }
+
         .track-record-table {
             border-collapse: collapse;
             width: 100%;
             font-size: 14px;
         }
 
-        .track-record-table th, .track-record-table td {
-            border: 2px solid #ddd;
+        .track-record-table th,
+        .track-record-table td {
+            border: 1px solid rgba(255, 255, 255, 0.18);
             text-align: center;
             padding: 8px;
-            
         }
 
         .track-record-table th {
-            background-color: #f2f2f2;
+            background-color: #251a31;
+            color: #ffe3f1;
             font-weight: bold;
         }
 
-        .tr-rank {
-            background-color: #f5ebf5;
-            font-weight: bold;
-        }
-        .tr-queen-name {
-            font-weight: bold;
-        }
-        .tr-queen-photo {
-            width: 60px;
-            height: 60px;
-            background-size: cover;
-            background-position: center;
-        }
-        .tr-ppe {
-            font-weight: bold;
-            background-color: lightgray;
-        }
-        /* Color classes for track records */
-        .tr-win { background-color: royalblue; color: white; font-weight: bold; }
-        .tr-top2 { background-color: lightgreen; }
-        .tr-high { background-color: lightblue; }
-        .tr-safe { background-color: white; }
-        .tr-safe-immune { background-color: white; border: 2px solid #a855f7 !important; }
-        .tr-low { background-color: pink; }
-        .tr-btm { background-color: tomato; }
-        .tr-elim { background-color: #E74C3C; color: white; font-weight: bold; }
-        .tr-semi-finals { background-color: sienna; color: white; font-weight: bold; }
-        .tr-guest { background-color: lightgrey; }
-        .tr-block { background-color: #4b5563; color: white; }
+        .tr-rank { background-color: #2c1d39; font-weight: bold; }
+        .tr-queen-name { font-weight: bold; }
+        .tr-queen-photo { width: 60px; height: 60px; background-size: cover; background-position: center; }
+        .tr-ppe { font-weight: bold; background-color: #30253a; }
+        .tr-win { background-color: #2252cb; color: white; font-weight: bold; }
+        .tr-top2 { background-color: #24b46f; color: #03150d; }
+        .tr-high { background-color: #5ca8ff; color: #041018; }
+        .tr-safe { background-color: #f3e8ff; color: #200f2e; }
+        .tr-safe-immune { background-color: #f3e8ff; color: #200f2e; border: 2px solid #d946ef !important; }
+        .tr-low { background-color: #f9a8d4; color: #2a0f1f; }
+        .tr-btm { background-color: #fb7185; color: #2a050c; }
+        .tr-elim { background-color: #dc2626; color: white; font-weight: bold; }
+        .tr-semi-finals { background-color: #92400e; color: white; font-weight: bold; }
+        .tr-guest { background-color: #e5e7eb; color: #111827; }
+        .tr-block { background-color: #334155; color: white; }
         .tr-special, .tr-choc, .tr-rtrn, .tr-star, .tr-qosdadh, .tr-star-gift { background-color: #a855f7; color: white; font-weight: bold; }
-        .tr-winner { background-color: gold; font-weight: bold;}
-        .tr-runner-up { background-color: silver; font-weight: bold;}
+        .tr-winner { background-color: #facc15; color: #1f1400; font-weight: bold; }
+        .tr-runner-up { background-color: #cbd5e1; color: #111827; font-weight: bold; }
+
         .hide { display: none; }
+
         .tab-button.active {
-            background-color: #d474a0;
-            color: white;
-            box-shadow: 0 4px 10px rgba(212, 116, 160, 0.3);
+            background-color: var(--pink);
+            color: #220415;
+            box-shadow: 0 4px 10px rgba(255, 79, 163, 0.35);
         }
-        input, select {
-            background-color: #f9fafb !important;
-            border: 1px solid #d1d5db !important;
-            color: #374151 !important;
+
+        input,
+        select {
+            background-color: #191321 !important;
+            border: 1px solid rgba(255, 157, 204, 0.4) !important;
+            color: #ffeaf5 !important;
+        }
+
+        input::placeholder { color: #c8a7be; }
+
+        .text-gray-500, .text-gray-600, .text-gray-700 { color: var(--muted) !important; }
+        .bg-white\/50, .bg-white\/60, .bg-white\/70 { background-color: rgba(20,16,29,0.72) !important; }
+        .bg-gray-100, .bg-gray-100\/70 { background-color: rgba(255,255,255,0.06) !important; }
+
+        *:focus-visible {
+            outline: 3px solid var(--focus);
+            outline-offset: 2px;
+            border-radius: 8px;
         }
     </style>
 </head>
@@ -500,7 +534,7 @@
             { name: "Victoria Scone", stats: { acting: 11, comedy: 10, dance: 8, design: 10, improv: 8, runway: 10, lipsync: 9 } },
             // UK Season 4
             { name: "Baby", stats: { acting: 6, comedy: 6, dance: 9, design: 10, improv: 4, runway: 9, lipsync: 11 } },
-            { name: "Black Peppa", stats: { acting: 5, comedy: 4, dance: 11, design: 4, runway: 13, lipsync: 13 } },
+            { name: "Black Peppa", stats: { acting: 5, comedy: 4, dance: 11, design: 4, improv: 5, runway: 13, lipsync: 13 } },
             { name: "Cheddar Gorgeous", stats: { acting: 12, comedy: 9, dance: 7, design: 10, improv: 13, runway: 14, lipsync: 8 } },
             { name: "Copper Topp", stats: { acting: 5, comedy: 4, dance: 9, design: 7, improv: 6, runway: 7, lipsync: 8 } },
             { name: "Dakota Schiffer", stats: { acting: 6, comedy: 9, dance: 9, design: 10, improv: 9, runway: 11, lipsync: 8 } },
